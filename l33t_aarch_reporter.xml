@@ -12,19 +12,22 @@
    save_state="y"
    date_written="2019-12-15 23:08:14"
    requires="5.07"
-   version="0.1"
+   version="0.2"
    >
 <description trim="y">
 <![CDATA[
-l33t_aarch_reporter (v0.1) by Ruhamah (https://aard.l33t.xyz)
+l33t_aarch_reporter (v0.2) by Ruhamah (https://aard.l33t.xyz)
 
 Usage:
 
-  l33t aarch                  - Displays help or Aarchaeology report
-                                if <containerId> is set
-  l33t aarch help             - Displays help
-  l33t aarch <containerId>    - Sets the <containerId> for Aarchaeology
-                                reports and run the report
+  l33t aarch                     - Displays help or Aarchaeology report
+                                   if <containerId> is set
+  l33t aarch help               - Displays help
+  l33t aarch <containerId>      - Sets the <containerId> for Aarchaeology
+                                  reports and run the report
+  report aarch pieces|missing [channel]
+                                - Reports to [channel] or says the Aarchaelogy
+                                  items that you have or are missing
 
 ]]>
 </description>
@@ -53,21 +56,6 @@ Usage:
 <!--  Aliases  -->
 
 <aliases>
-  <!--  Plugin help  -->
-  <alias
-   group="l33t"
-   script="OnHelp"
-   match="l33t_aarch_reporter:help"
-   enabled="y"
-  >
-  </alias>
-  <alias
-   group="l33t"
-   script="OnHelp"
-   match="l33t aarch help"
-   enabled="y"
-  >
-  </alias>
   <alias
    enabled="y"
    group="l33t"
@@ -78,12 +66,51 @@ Usage:
    sequence="100"
   >
   </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^report aarch ?(?P<mode>(pieces)|(missing)) ?(?P<channel>.*)$"
+   name="l33t_aarch_report_channel"
+   regexp="y"
+   script="reportAarch"
+   sequence="101"
+  >
+  </alias>
+  <!--  Plugin help  -->
+  <alias
+   group="l33t"
+   script="OnHelp"
+   match="l33t_aarch_reporter:help"
+   enabled="y"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   group="l33t"
+   script="OnHelp"
+   match="^l33t aarch.*$"
+   enabled="y"
+   regexp="y"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   group="l33t"
+   script="OnHelp"
+   match="^report aarch.*$"
+   enabled="y"
+   regexp="y"
+   sequence="999"
+  >
+  </alias>
 </aliases>
 
 <!--  Script  -->
 
 <script>
 <![CDATA[
+
+-- Globals
 
 PLUGIN_ID = GetPluginID()
 PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
@@ -95,9 +122,13 @@ PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
 
 PLUGIN_URL = 'https://aard.l33t.xyz'
 
+reportMode = 0
+reportChannel = ''
 aarchItems = {}
 aarchPamphlets = {}
 
+
+-- Functions
 
 function l33t_aarch_reporter(name, line, wildcards)
     local rawContainerId = GetAliasWildcard(name, 'containerId')
@@ -111,52 +142,77 @@ function l33t_aarch_reporter(name, line, wildcards)
 
     local containerId = inputContainerId or savedContainerId
 
-    if containerId then
-        local triggerName = 'l33t_aarch_invdata_start'
-        local matchText = '^{invdata ' .. containerId .. '}$'
-        local responseText = ''
-        local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
-        local color = custom_colour.NoChange
-        local wildcard = 0
-        local soundFileName = ''
-        local scriptName = 'startCapturingInvdata'
-
-        AddTrigger(
-            triggerName,
-            matchText,
-            responseText,
-            flags,
-            color,
-            wildcard,
-            soundFileName,
-            scriptName
-        )
-
-        local triggerName = 'l33t_aarch_invdata_end'
-        local matchText = '^{/invdata}$'
-        local responseText = ''
-        local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
-        local color = custom_colour.NoChange
-        local wildcard = 0
-        local soundFileName = ''
-        local scriptName = 'stopCapturingInvdata'
-        AddTrigger(
-            triggerName,
-            matchText,
-            responseText,
-            flags,
-            color,
-            wildcard,
-            soundFileName,
-            scriptName
-        )
-
-        SendNoEcho('invdata ' .. containerId)
-    else
+    if containerId == nil then
         Note('No <containerId> specified.\n')
         OnHelp()
+    else
+        SetVariable('reportMode', 0)
+        prepareAarchReport(containerId)
     end
 end
+
+
+function reportAarch(name, line, wildcards)
+    local savedContainerId = GetVariable('l33t_aarch_container_id')
+
+    if savedContainerId == nil then
+        Note('No <containerId> set.\n')
+        OnHelp()
+    else
+       local inputMode = GetAliasWildcard(name, 'mode')
+       local inputChannel = GetAliasWildcard(name, 'channel')
+       local channel = string.len(inputChannel) > 0 and inputChannel or 'say'
+
+       reportMode = inputMode
+       reportChannel = channel
+
+       prepareAarchReport(savedContainerId)
+    end
+end
+
+
+function prepareAarchReport(containerId)
+    local triggerName = 'l33t_aarch_invdata_start'
+    local matchText = '^{invdata ' .. containerId .. '}$'
+    local responseText = ''
+    local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
+    local color = custom_colour.NoChange
+    local wildcard = 0
+    local soundFileName = ''
+    local scriptName = 'startCapturingInvdata'
+
+    AddTrigger(
+        triggerName,
+        matchText,
+        responseText,
+        flags,
+        color,
+        wildcard,
+        soundFileName,
+        scriptName
+    )
+
+    local triggerName = 'l33t_aarch_invdata_end'
+    local matchText = '^{/invdata}$'
+    local responseText = ''
+    local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
+    local color = custom_colour.NoChange
+    local wildcard = 0
+    local soundFileName = ''
+    local scriptName = 'stopCapturingInvdata'
+    AddTrigger(
+        triggerName,
+        matchText,
+        responseText,
+        flags,
+        color,
+        wildcard,
+        soundFileName,
+        scriptName
+    )
+
+    SendNoEcho('invdata ' .. containerId)
+ end
 
 
 function setAarchContainerId(containerId)
@@ -196,20 +252,27 @@ end
 
 
 function resetState()
+    reportMode = 0
+    reportChannel = ''
     aarchItems = {}
     aarchPamphlets = {}
 end
 
+
 function startCapturingInvdata(name, line, wildcards)
     EnableTrigger('l33t_aarch_invdata_item', 1)
-    resetState()
 end
 
 
 function stopCapturingInvdata(name, line, wildcards)
     EnableTrigger('l33t_aarch_invdata_item', 0)
     local report = getAarchReport()
-    displayReport(report)
+
+    if reportMode == '0' then
+        displayReport(report)
+    else
+        reportToChannel(report)
+    end
     resetState()
 end
 
@@ -227,10 +290,17 @@ end
 
 
 function getAarchReport()
-     local turnIn = ''
+     local pieces = ''
      local i = 0
+
+     local piecesPrefix = reportMode == 'pieces' and '' or '- '
+     local piecesSuffix = reportMode == 'pieces' and '' or '\n'
+
      for itemName, count in orderedPairs(aarchItems) do
-         turnIn = turnIn .. '- ' .. count .. 'x ' .. itemName .. '\n'
+         if reportMode == 'pieces' and i > 0 then
+             pieces = pieces .. ', '
+         end
+         pieces = pieces .. piecesPrefix .. count .. 'x ' .. itemName .. piecesSuffix
          i = i + 1
      end
 
@@ -256,16 +326,35 @@ function getAarchReport()
          n = n + 1
      end
 
-     local report = (
-        'Aarchaeology pamphlets collected:\n' .. pamphlets .. '\n\n'
-        .. 'Aarchaeology items available to turn in:\n' .. turnIn .. '\n'
-        .. 'Aarchaeology items missing:\n' .. missing .. '\n'
-     )
+     local report = {
+         pieces = pieces;
+         missing = missing;
+         pamphlets = pamphlets;
+     }
      return report
 end
 
 
+function reportToChannel(report)
+    local msg = nil
+
+    if reportMode == 'pieces' then
+        msg = 'Aarchaeology items available to turn in: ' .. report.pieces
+    elseif reportMode == 'missing' then
+        msg = 'Aarchaeology items missing: ' .. report.missing
+    end
+
+    SendNoEcho(reportChannel .. ' ' .. msg)
+end
+
+
 function displayReport(report)
+     local reportStr = (
+        'Aarchaeology pamphlets collected:\n' .. report.pamphlets .. '\n\n'
+        .. 'Aarchaeology items available to turn in:\n' .. report.pieces .. '\n'
+        .. 'Aarchaeology items missing:\n' .. report.missing .. '\n'
+     )
+
      local savedContainerId = GetVariable('l33t_aarch_container_id')
 
     Note(
@@ -273,7 +362,7 @@ function displayReport(report)
         .. '[l33t aarch report] by ' .. PLUGIN_AUTHOR .. ' (' .. PLUGIN_URL .. ')\n'
         .. 'Container: ' .. savedContainerId .. '\n'
     )         
-    Note(report)
+    Note(reportStr)
     Note('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 end
 
