@@ -1,4 +1,4 @@
-# [<code>aard.l33t.xyz</code>](https://aard.l33t.xyz) / l33t-aardwolf-plugins
+# [<code>aard.l33t.xyz</code>](https://aard.l33t.xyz) / <code>l33t-aardwolf-plugins</code>
 
 These are very l33t indeed.
 
