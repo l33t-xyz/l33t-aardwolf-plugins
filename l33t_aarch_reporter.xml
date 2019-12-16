@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+<!-- MuClient version 5.07-pre -->
+
+<muclient>
+<plugin
+   name="l33t_aarch_reporter"
+   author="Ruhamah"
+   id="46a8a53a355f869f61b200ee"
+   language="Lua"
+   purpose="Report which Aarchaeology item numbers you are missing"
+   save_state="y"
+   date_written="2019-12-15 23:08:14"
+   requires="5.07"
+   version="0.1"
+   >
+<description trim="y">
+<![CDATA[
+l33t_aarch_reporter (v0.1) by Ruhamah (https://aard.l33t.xyz)
+
+Usage:
+
+  l33t aarch                  - Displays help or Aarchaeology report
+                                if <containerId> is set
+  l33t aarch help             - Displays help
+  l33t aarch <containerId>    - Sets the <containerId> for Aarchaeology
+                                reports and run the report
+
+]]>
+</description>
+
+</plugin>
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+<!--  Triggers  -->
+
+<triggers>
+  <trigger
+   enabled="n"
+   group="l33t"
+   match="^(?P<itemId>\d+),(?P<itemFlags>K?M?G?H?),(?P<itemName>.*),(?P<level>\d+),(?P<itemType>\d{1,2}),(?P<isUnique>1|0),(?P<wearLoc>-?\d+),(?P<timer>-?\d+)$"
+   name="l33t_aarch_invdata_item"
+   omit_from_output="y"
+   regexp="y"
+   script="l33t_aarch_invdata_item"
+   sequence="100"
+  >
+  </trigger>
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <!--  Plugin help  -->
+  <alias
+   group="l33t"
+   script="OnHelp"
+   match="l33t_aarch_reporter:help"
+   enabled="y"
+  >
+  </alias>
+  <alias
+   group="l33t"
+   script="OnHelp"
+   match="l33t aarch help"
+   enabled="y"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t aarch ?(?P<containerId>\d*)$"
+   name="l33t_aarch_reporter"
+   regexp="y"
+   script="l33t_aarch_reporter"
+   sequence="100"
+  >
+  </alias>
+</aliases>
+
+<!--  Script  -->
+
+<script>
+<![CDATA[
+
+PLUGIN_ID = GetPluginID()
+PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
+PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
+PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
+PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
+PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
+PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
+
+PLUGIN_URL = 'https://aard.l33t.xyz'
+
+aarchItems = {}
+aarchPamphlets = {}
+
+
+function l33t_aarch_reporter(name, line, wildcards)
+    local rawContainerId = GetAliasWildcard(name, 'containerId')
+    local inputContainerId = rawContainerId and tonumber(rawContainerId) or nil
+
+    local savedContainerId = GetVariable('l33t_aarch_container_id')
+
+    if inputContainerId then
+        setAarchContainerId(inputContainerId)
+    end
+
+    local containerId = inputContainerId or savedContainerId
+
+    if containerId then
+        local triggerName = 'l33t_aarch_invdata_start'
+        local matchText = '^{invdata ' .. containerId .. '}$'
+        local responseText = ''
+        local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
+        local color = custom_colour.NoChange
+        local wildcard = 0
+        local soundFileName = ''
+        local scriptName = 'startCapturingInvdata'
+
+        AddTrigger(
+            triggerName,
+            matchText,
+            responseText,
+            flags,
+            color,
+            wildcard,
+            soundFileName,
+            scriptName
+        )
+
+        local triggerName = 'l33t_aarch_invdata_end'
+        local matchText = '^{/invdata}$'
+        local responseText = ''
+        local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
+        local color = custom_colour.NoChange
+        local wildcard = 0
+        local soundFileName = ''
+        local scriptName = 'stopCapturingInvdata'
+        AddTrigger(
+            triggerName,
+            matchText,
+            responseText,
+            flags,
+            color,
+            wildcard,
+            soundFileName,
+            scriptName
+        )
+
+        SendNoEcho('invdata ' .. containerId)
+    else
+        Note('No <containerId> specified.\n')
+        OnHelp()
+    end
+end
+
+
+function setAarchContainerId(containerId)
+    Note('Setting Aarchaeology container id to ' .. containerId)
+    SetVariable('l33t_aarch_container_id', containerId)
+end
+
+
+function l33t_aarch_invdata_item(name, line, wildcards)
+    local itemId = tonumber(GetTriggerWildcard(name, 'itemId'))
+    local itemFlags = GetTriggerWildcard(name, 'itemFlags')
+    local itemName = GetTriggerWildcard(name, 'itemName')
+    local level = tonumber(GetTriggerWildcard(name, 'level'))
+    local itemType = tonumber(GetTriggerWildcard(name, 'itemType'))
+    local isUnique = tonumber(GetTriggerWildcard(name, 'isUnique'))
+    local wearLoc = tonumber(GetTriggerWildcard(name, 'wearLoc'))
+    local timer = tonumber(GetTriggerWildcard(name, 'timer'))
+
+    --Note(itemId .. itemFlags .. itemName .. level .. itemType .. isUnique .. wearLoc .. timer)
+
+    if itemType == 6 then  -- is Special item
+       -- Green parentheses
+       local aarchItemIndexStart, aarchItemIndexEnd = string.find(itemName, '@R%(@YAarchaeology@R%)')
+       local isAarchItem = aarchItemIndexStart == 1 and aarchItemIndexEnd ~= nil
+
+       -- Red parentheses
+       local aarchPamphIndexStart, aarchPamphIndexEnd = string.find(itemName, '@G%(@YAarchaeology@G%)')
+       local isAarchPamph = aarchPamphIndexStart == 1 and aarchPamphIndexEnd ~= nil
+
+       if isAarchItem then
+          addAarchItem(itemName)
+       elseif isAarchPamph then
+          addAarchPamph(itemName)
+       end
+    end
+end
+
+
+function resetState()
+    aarchItems = {}
+    aarchPamphlets = {}
+end
+
+function startCapturingInvdata(name, line, wildcards)
+    EnableTrigger('l33t_aarch_invdata_item', 1)
+    resetState()
+end
+
+
+function stopCapturingInvdata(name, line, wildcards)
+    EnableTrigger('l33t_aarch_invdata_item', 0)
+    local report = getAarchReport()
+    displayReport(report)
+    resetState()
+end
+
+
+function addAarchItem(itemName)
+    local count = aarchItems[itemName] or 0
+    aarchItems[itemName] = (count + 1)
+end
+
+
+function addAarchPamph(itemName)
+    local aarchNum = tonumber(string.match(itemName, 'Collectable Pamphlet #(%d+)'))
+    aarchPamphlets[aarchNum] = 1
+end
+
+
+function getAarchReport()
+     local turnIn = ''
+     local i = 0
+     for itemName, count in orderedPairs(aarchItems) do
+         turnIn = turnIn .. '- ' .. count .. 'x ' .. itemName .. '\n'
+         i = i + 1
+     end
+
+     local pamphlets = ''
+     local i = 0
+     for itemNum, _ in orderedPairs(aarchPamphlets) do
+         if i > 0 then
+             pamphlets = pamphlets .. ', '
+         end
+         pamphlets = pamphlets .. itemNum
+         i = i + 1
+     end
+
+     local missing = ''
+     local n = 1
+     while n <= 50 do
+         if aarchPamphlets[n] == nil then
+             if string.len(missing) > 0 then
+                 missing = missing .. ', '
+             end
+             missing = missing .. n
+         end
+         n = n + 1
+     end
+
+     local report = (
+        'Aarchaeology pamphlets collected:\n' .. pamphlets .. '\n\n'
+        .. 'Aarchaeology items available to turn in:\n' .. turnIn .. '\n'
+        .. 'Aarchaeology items missing:\n' .. missing .. '\n'
+     )
+     return report
+end
+
+
+function displayReport(report)
+     local savedContainerId = GetVariable('l33t_aarch_container_id')
+
+    Note(
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+        .. '[l33t aarch report] by ' .. PLUGIN_AUTHOR .. ' (' .. PLUGIN_URL .. ')\n'
+        .. 'Container: ' .. savedContainerId .. '\n'
+    )         
+    Note(report)
+    Note('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+end
+
+
+function OnHelp (sName, sLine, wildcards)
+    Note(GetPluginInfo(GetPluginID(), 3))
+end
+
+
+--[[
+Ordered table iterator, allow to iterate on the natural order of the keys of a
+table.
+
+From http://lua-users.org/wiki/SortedIteration
+]]
+
+function __genOrderedIndex( t )
+    local orderedIndex = {}
+    for key in pairs(t) do
+        table.insert( orderedIndex, key )
+    end
+    table.sort( orderedIndex )
+    return orderedIndex
+end
+
+function orderedNext(t, state)
+    -- Equivalent of the next function, but returns the keys in the alphabetic
+    -- order. We use a temporary ordered key table that is stored in the
+    -- table being iterated.
+
+    local key = nil
+    --print("orderedNext: state = "..tostring(state) )
+    if state == nil then
+        -- the first time, generate the index
+        t.__orderedIndex = __genOrderedIndex( t )
+        key = t.__orderedIndex[1]
+    else
+        -- fetch the next value
+        for i = 1,table.getn(t.__orderedIndex) do
+            if t.__orderedIndex[i] == state then
+                key = t.__orderedIndex[i+1]
+            end
+        end
+    end
+
+    if key then
+        return key, t[key]
+    end
+
+    -- no more value to return, cleanup
+    t.__orderedIndex = nil
+    return
+end
+
+function orderedPairs(t)
+    -- Equivalent of the pairs() function on tables. Allows to iterate
+    -- in order
+    return orderedNext, t, nil
+end
+--[[
+End Ordered Table functions
+]]
+
+
+function loaded()
+    Note(
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+        .. 'Loaded ' .. PLUGIN_NAME .. ' (v' .. PLUGIN_VERSION .. ')'
+        .. ' by ' .. PLUGIN_AUTHOR .. ' (' .. PLUGIN_URL .. ').\n'
+        .. 'Loaded ' .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+        .. PLUGIN_NUM_ALIASES .. ' aliases, '
+        .. PLUGIN_NUM_TIMERS .. ' timers. '
+        .. 'Type "l33t aarch" for help.\n'
+        .. '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+   )
+end
+
+
+loaded()
+
+
+]]>
+</script> 
+
+</muclient>
