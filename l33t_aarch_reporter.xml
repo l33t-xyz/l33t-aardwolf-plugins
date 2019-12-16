@@ -12,22 +12,23 @@
    save_state="y"
    date_written="2019-12-15 23:08:14"
    requires="5.07"
-   version="0.2"
+   version="0.3"
    >
 <description trim="y">
 <![CDATA[
-l33t_aarch_reporter (v0.2) by Ruhamah (https://aard.l33t.xyz)
+l33t_aarch_reporter (v0.3) by Ruhamah (https://aard.l33t.xyz)
 
 Usage:
 
-  l33t aarch                    - Displays help or Aarchaeology report
-                                  if <containerId> is set
-  l33t aarch help               - Displays help
-  l33t aarch <containerId>      - Sets the <containerId> for Aarchaeology
-                                  reports and run the report
-  report aarch pieces|missing [channel]
-                                - Reports to [channel] or says the Aarchaelogy
-                                  items that you have or are missing
+  l33t aarch                     - Displays help or Aarchaeology report
+                                   if <containerId> is set
+  l33t aarch help                - Displays help
+  l33t aarch <containerId>       - Sets the <containerId> for Aarchaeology
+                                   reports and run the report
+  report aarch missing [channel] - Reports to [channel] or says the Aarchaelogy
+                                   items that you are missing
+  report aarch pieces [channel]  - Reports to [channel] or says the Aarchaelogy
+                                   items that you have
 
 ]]>
 </description>
@@ -146,7 +147,7 @@ function l33t_aarch_reporter(name, line, wildcards)
         Note('No <containerId> specified.\n')
         OnHelp()
     else
-        SetVariable('reportMode', 0)
+        reportMode = 0
         prepareAarchReport(containerId)
     end
 end
@@ -268,10 +269,10 @@ function stopCapturingInvdata(name, line, wildcards)
     EnableTrigger('l33t_aarch_invdata_item', 0)
     local report = getAarchReport()
 
-    if reportMode == '0' then
-        displayReport(report)
-    else
+    if reportMode == 'pieces' or reportMode == 'missing' then
         reportToChannel(report)
+    elseif reportMode == 0 then
+        displayReport(report)
     end
     resetState()
 end
