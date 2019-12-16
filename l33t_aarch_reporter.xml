@@ -10,13 +10,13 @@
    language="Lua"
    purpose="Report which Aarchaeology item numbers you are missing"
    save_state="y"
-   date_written="2019-12-15 23:08:14"
+   date_written="2019-12-16 01:33:37"
    requires="5.06"
-   version="0.04"
+   version="0.05"
    >
 <description trim="y">
 <![CDATA[
-l33t_aarch_reporter (v0.04) by Ruhamah (https://aard.l33t.xyz)
+l33t_aarch_reporter (v0.05) by Ruhamah (https://aard.l33t.xyz)
 
 Usage:
 
