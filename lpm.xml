@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<pluginsListing>
+  <plugin>
+    <name>l33t aarch reporter</name>
+    <author>Ruhamah</author>
+    <description>Report which Aarchaeology item numbers you are missing.</description>
+    <id>46a8a53a355f869f61b200ee</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_aarch_reporter-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+
+</pluginsListing>
