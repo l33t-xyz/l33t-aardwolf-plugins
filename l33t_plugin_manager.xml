@@ -132,8 +132,8 @@ local lastPluginList
 
 
 function lpm_main(name, line, wc)
-   printmsg('*** Requesting plugin/update list from server.. Please wait.\r\n\r\n')
-   async.HEAD(pluginListUrl, async_head_plist, 'HTTPS', 120)
+    printmsg('*** Requesting plugin/update list from server.. Please wait.\r\n\r\n')
+    async.HEAD(pluginListUrl, async_head_plist, 'HTTPS', 120)
 end
 
 
@@ -175,7 +175,7 @@ function lpm_update(name, line, wc)
         local url = 'https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_plugin_manager.xml'
         async.doAsyncRemoteRequest(url, async_lpm_download_complete, 'HTTPS', 120)
     else
-       Execute('lpm install ' .. wc.index)
+        Execute('lpm install ' .. wc.index)
     end
 end
 
@@ -280,7 +280,7 @@ end
 
 function async_lpm_download_complete(retval, page, status, headers, full_status, request_url)
     if status == 200 then
-        local version = tonumber(string.match(page, '%s%s+version='([0-9%.]+)''))
+        local version = tonumber(string.match(page, "%s%s+version='([0-9%.]+)'"))
         local installedVer = GetPluginInfo(GetPluginID(), 19)
         if version > installedVer then
             printmsg('Updating from version ' .. installedVer .. ' to version ' .. version)
@@ -289,7 +289,15 @@ function async_lpm_download_complete(retval, page, status, headers, full_status,
             file:write(page)
             file:close()
             if GetAlphaOption('script_prefix') == '' then SetAlphaOption('script_prefix', '\\\\\\') end
-            Execute(GetAlphaOption('script_prefix').."DoAfterSpecial(1, \"ReloadPlugin('"..GetPluginID().."')\", sendto.script)")
+            Execute(
+                GetAlphaOption('script_prefix')
+                .. 'DoAfterSpecial(1, "'
+                .. 'ReloadPlugin('
+                .. "'"
+                .. GetPluginID()
+                .. "')"
+                .. ', sendto.script)'
+            )
         else
             printmsg('You already have the latest version of l33t.xyz Plugin Manager installed.')
         end
@@ -439,13 +447,13 @@ end
 
 
 function printmsg(msg)
-    ColourNote('cornflowerblue', '', msg)
+    ColourNote('CornFlowerBlue', '', msg)
 end
 
 
 function OnPluginBroadcast (msg, id, name, text)
     require 'gmcphelper'
-    if (id == '3e7dedbe37e44942dd46d264') then              -- GMCP Handler plugin
+    if (id == '3e7dedbe37e44942dd46d264') then  -- GMCP Handler plugin
         if text == 'char.status' then
         end
     end
@@ -456,19 +464,43 @@ function OnPluginInstall()
     local installedStr = GetVariable('installedPlugins')
     local lastListStr = GetVariable('lastPluginList')
     if installedStr ~= nil then
-        installedPlugins = load( 'return '..installedStr)( ) 
+        installedPlugins = load( 'return ' .. installedStr)() 
     end
     if lastListStr ~= nil then
-        lastPluginList = load( 'return '..lastListStr)( ) 
+        lastPluginList = load( 'return ' .. lastListStr)() 
     end
     lastListHash = GetVariable('lastListHash')
-    ColourTell('CornFlowerBlue', '', 'l33t.xyz Plugin Manager has been loaded. Type "', 'MediumSeaGreen', '', 'lpm', 'CornFlowerBlue', '', '" or "', 'MediumSeaGreen', '', 'lpm help', 'CornFlowerBlue', '', '"')
-    print('')
+
+    ColourTell(
+        'CornFlowerBlue', '', '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n',
+        'CornFlowerBlue', '', (
+            'Loaded ' .. PLUGIN_NAME
+            .. ' (v' .. PLUGIN_VERSION .. ')'
+            .. ' by ' .. PLUGIN_AUTHOR
+            .. ' ('
+        )
+    )
+    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+    ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            .. 'Loaded '
+            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+            .. PLUGIN_NUM_ALIASES .. ' aliases, '
+            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'lpm',
+        'CornFlowerBlue', '', '" or "',
+        'MediumSeaGreen', '', 'lpm help',
+        'CornFlowerBlue', '', '".\n',
+        'CornFlowerBlue', '', '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
 end
 
 
 function OnPluginSaveState()
-    -- this will run when SaveState() is called or if mush is closing etc
+    -- this will run when SaveState() is called or if MUSH is closing etc
     if installedPlugins ~= nil then
         SetVariable('installedPlugins', serialize.save_simple(installedPlugins))
     end
