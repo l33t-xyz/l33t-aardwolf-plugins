@@ -20,8 +20,8 @@ l33t_aarch_reporter (v0.2) by Ruhamah (https://aard.l33t.xyz)
 
 Usage:
 
-  l33t aarch                     - Displays help or Aarchaeology report
-                                   if <containerId> is set
+  l33t aarch                    - Displays help or Aarchaeology report
+                                  if <containerId> is set
   l33t aarch help               - Displays help
   l33t aarch <containerId>      - Sets the <containerId> for Aarchaeology
                                   reports and run the report
