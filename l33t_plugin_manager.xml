@@ -226,19 +226,27 @@ function async_head_plugin(retval, page, status, headers, full_status, request_u
     if #pluginList == 0  and #lastPluginList > 0 then
         pluginList = lastPluginList
     end
+
     for i = 1, #pluginList do
         if pluginList[i].download == request_url then
             thisPlugin = pluginList[i]
         end
     end
+
     if thisPlugin == nil then return end
     thisPlugin.lastModified = headers['etag'] or 'Unknown'
+
+    ColourTell(
+       'CornFlowerBlue', '', '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
+
     if pListNum == #pluginList then
         pListNum = 0
         for i = 1, #pluginList do
             thisPlugin = pluginList[i]
             thisPlugin.updated = false
             ColourTell('CornFlowerBlue', '', '[' .. i .. '] ', 'LightSkyBlue', '', thisPlugin.name .. ' ')
+
             if thisPlugin.installed then
                 Hyperlink('lpm reload ' .. i, '[Reload Plugin] ', 'Reload Plugin #' .. pListNum, 'LimeGreen', 'black', 0, 1)
                 for k, v in pairs(installedPlugins) do
@@ -250,6 +258,7 @@ function async_head_plugin(retval, page, status, headers, full_status, request_u
                         end
                     end
                 end
+
                 if not thisPlugin.updated then
                     Hyperlink('lpm install ' .. i, '[Update Plugin]', 'Download and Update Plugin #' .. i, 'DarkOrange', 'black', 0, 1)
                     print('')
@@ -258,11 +267,13 @@ function async_head_plugin(retval, page, status, headers, full_status, request_u
                     --   print('')
                     --end
                 end
+
                 ColourTell('CadetBlue', '', '     ' .. thisPlugin.description)
                 print('\r\n\r\n')
             else
                 Hyperlink('lpm install ' .. i, '[Install Plugin]', 'Download and Install Plugin #' .. pListNum, 'DarkOrange', 'black', 0, 1)
                 --ColourTell('LightSkyBlue', '', thisPlugin.lastModified)
+
                 for k, v in pairs(installedPlugins) do
                     --print(k, thisPlugin.ids[1])
                     if thisPlugin.ids[1] == k then
@@ -281,6 +292,10 @@ function async_head_plugin(retval, page, status, headers, full_status, request_u
         ColourTell('LightSkyBlue', '', '** l33t.xyz writes plugins for fun, and to share with others.\r\n** If you find them useful and would like to donate, we do accept PayPal at: ')
         Hyperlink('https://paypal.me/l33tdotxyz', 'https://paypal.me/l33tdotxyz', 'Click to donate via PayPal', 'yellowgreen', '', 1)
         print('')
+        ColourTell(
+           'CornFlowerBlue', '', '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+        )
+
         --printmsg('End of plugin list, ' .. #pluginList .. ' plugins indexed.')
     end
 end
