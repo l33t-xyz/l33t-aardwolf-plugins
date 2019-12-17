@@ -9,12 +9,12 @@
    purpose="Manages updates for l33t.xyz plugins"
    date_written="2019-12-16 01:33:37"
    requires="4.76"
-   version="0.01"
+   version="0.02"
    save_state="y"
    >
 <description trim="y">
 <![CDATA[
-l33t_plugin_manager (v0.01) by Ruhamah (https://aard.l33t.xyz)
+l33t_plugin_manager (v0.02) by Ruhamah (https://aard.l33t.xyz)
 
 >    lpm
         - display summary of all plugins
@@ -115,7 +115,9 @@ PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
 
 PLUGIN_URL = 'https://aard.l33t.xyz'
 
--- Functions
+
+-- Locals and Imports
+
 
 local async = require 'async'
 local last_update
@@ -129,6 +131,9 @@ local updatePlugin = {}
 local pListNum = 0
 local pluginListUrl = 'https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/lpm.xml'
 local lastPluginList
+
+
+-- Core Functions
 
 
 function lpm_main(name, line, wc)
@@ -189,6 +194,9 @@ function lpm_help(name, line, wc)
     ColourNote('SteelBlue', '', GetPluginInfo (GetPluginID (), 3))
     print('')
 end
+
+
+-- Helper Functions
 
 
 function async_head_plist(retval, page, status, headers, full_status, request_url)
@@ -270,8 +278,8 @@ function async_head_plugin(retval, page, status, headers, full_status, request_u
                 print('\r\n\r\n')
             end
         end
-        --ColourTell('LightSkyBlue', '', '** l33t.xyz writes plugins for fun, and to share with others.\r\n** If you find them useful and would like to donate, I do accept PayPal at: ')
-        --Hyperlink('http://paypal.me/l33t-xyz', 'http://paypal.me/l33t-xyz', 'Click to donate via PayPal', 'yellowgreen', '', 1)
+        ColourTell('LightSkyBlue', '', '** l33t.xyz writes plugins for fun, and to share with others.\r\n** If you find them useful and would like to donate, we do accept PayPal at: ')
+        Hyperlink('https://paypal.me/l33tdotxyz', 'https://paypal.me/l33tdotxyz', 'Click to donate via PayPal', 'yellowgreen', '', 1)
         print('')
         --printmsg('End of plugin list, ' .. #pluginList .. ' plugins indexed.')
     end
@@ -330,24 +338,25 @@ function async_plugin_download_complete(retval, page, status, headers, full_stat
             local currFileContents = currFile:read('*a') -- read entire contents of current file
             local hBinaryOutput = io.open(folder .. file.filename, 'wb')
             -- write current file inside zip to a file outside zip
-            if(hBinaryOutput)then
+            if (hBinaryOutput) then
                 hBinaryOutput:write(currFileContents)
                 hBinaryOutput:close()
             end
             printmsg('(+) ' .. file.filename)
             local fileExt = string.sub(file.filename, -4)
             if fileExt == '.xml' then
+                xmlFile = {}
                 xmlFile.filename = file.filename
                 --print(xmlFile.filename)
-                xmlFile.pluginid = string.match(currFileContents, "%s%s+id='(.-)'")
+                xmlFile.pluginId = string.match(currFileContents, '%s%s+id="(.-)"')
                 table.insert(xmlFiles, xmlFile)
-                xmlFile = {}
             end
             currFile:close()
         end
         os.remove(folder .. 'temp_update.zip')
         printmsg('Update succeeded, loading/reloading plugins.')
         printmsg('----------------------------------------------')
+
         for i = 1, #updatePlugin.ids do
             --if not IsPluginInstalled(thisPlugin.ids[i]) then
                 --LoadPlugin(folder ..  
@@ -355,15 +364,17 @@ function async_plugin_download_complete(retval, page, status, headers, full_stat
             --(IsPluginInstalled(thisPlugin.ids[i]) and GetPluginInfo(thisPlugin.ids[i], 17)) then
             --ReloadPlugin(updatePlugin.ids[i])
         end
+
         for i = 1, #xmlFiles do
-            --print(xmlFiles[i].filename, xmlFiles[i].pluginid)
+            local xmlFile = xmlFiles[i]
+            --print(xmlFiles[i].filename, xmlFiles[i].pluginId)
             --local version = tonumber(string.match(page, '%s%s+version='([0-9%.]+)''))
-           if not (IsPluginInstalled(xmlFiles[i].pluginid) and GetPluginInfo(xmlFiles[i].pluginid, 17)) then
-               LoadPlugin(folder .. xmlFiles[i].filename)
-           else
-               ReloadPlugin(xmlFiles[i].pluginid)
-           end
-               installedPlugins[xmlFiles[i].pluginid] = headers['etag']
+            if not (IsPluginInstalled(xmlFile.pluginId) and GetPluginInfo(xmlFile.pluginId, 17)) then
+                LoadPlugin(folder .. xmlFile.filename)
+            else
+                ReloadPlugin(xmlFile.pluginId)
+            end
+            installedPlugins[xmlFile.pluginId] = headers['etag']
         end
         SaveState()
     else
