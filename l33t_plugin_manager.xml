@@ -9,12 +9,12 @@
    purpose="Manages updates for l33t.xyz plugins"
    date_written="2019-12-16 01:33:37"
    requires="4.76"
-   version="0.02"
+   version="0.03"
    save_state="y"
    >
 <description trim="y">
 <![CDATA[
-l33t_plugin_manager (v0.02) by Ruhamah (https://aard.l33t.xyz)
+l33t_plugin_manager (v0.03) by Ruhamah (https://aard.l33t.xyz)
 
 >    lpm
         - display summary of all plugins
