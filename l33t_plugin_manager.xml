@@ -137,7 +137,7 @@ local lastPluginList
 
 
 function lpm_main(name, line, wc)
-    printmsg('*** Requesting plugin/update list from server.. Please wait.\r\n\r\n')
+    printmsg('*** Requesting plugin/update list from server... Please wait.\r\n\r\n')
     async.HEAD(pluginListUrl, async_head_plist, 'HTTPS', 120)
 end
 
@@ -176,7 +176,7 @@ end
 
 function lpm_update(name, line, wc)
     if wc.index == '' then
-        printmsg('*** Checking if update is available for l33t.xyz Plugin Manager.. Please wait.\r\n\r\n')
+        printmsg('*** Checking if update is available for l33t.xyz Plugin Manager... Please wait.\r\n\r\n')
         local url = 'https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_plugin_manager.xml'
         async.doAsyncRemoteRequest(url, async_lpm_download_complete, 'HTTPS', 120)
     else
@@ -303,7 +303,7 @@ end
 
 function async_lpm_download_complete(retval, page, status, headers, full_status, request_url)
     if status == 200 then
-        local version = tonumber(string.match(page, "%s%s+version='([0-9%.]+)'"))
+        local version = tonumber(string.match(page, '%s%s+version="([0-9%.]+)"'))
         local installedVer = GetPluginInfo(GetPluginID(), 19)
         if version > installedVer then
             printmsg('Updating from version ' .. installedVer .. ' to version ' .. version)
@@ -383,7 +383,7 @@ function async_plugin_download_complete(retval, page, status, headers, full_stat
         for i = 1, #xmlFiles do
             local xmlFile = xmlFiles[i]
             --print(xmlFiles[i].filename, xmlFiles[i].pluginId)
-            --local version = tonumber(string.match(page, '%s%s+version='([0-9%.]+)''))
+            --local version = tonumber(string.match(page, '%s%s+version="([0-9%.]+)"'))
             if not (IsPluginInstalled(xmlFile.pluginId) and GetPluginInfo(xmlFile.pluginId, 17)) then
                 LoadPlugin(folder .. xmlFile.filename)
             else
