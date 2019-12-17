@@ -4,7 +4,7 @@
 
 *To use, click the download links to download and install the plugin XML into MUSHclient.*
 
-## <code>l33t</code> Plugin Manager
+## Get this first: <code>l33t</code> Plugin Manager
 
 - **l33t Plugin Manager** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_plugin_manager.xml)) - Plugin manager for l33t.xyz-built plugins. Install this to manage and download all the others.
 
