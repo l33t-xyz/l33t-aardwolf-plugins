@@ -1,8 +1,8 @@
 # [<code>aard.l33t.xyz</code>](https://aard.l33t.xyz) / <code>l33t-aardwolf-plugins</code>
 
-These are very l33t indeed.
+*These are very l33t indeed.*
 
-To use, click the download links to download and install the plugin XML into MUSHclient.
+*To use, click the download links to download and install the plugin XML into MUSHclient.*
 
 ## <code>l33t</code> Plugin Manager
 
