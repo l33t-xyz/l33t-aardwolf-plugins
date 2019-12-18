@@ -9,12 +9,12 @@
    purpose="Manages updates for l33t.xyz plugins"
    date_written="2019-12-16 01:33:37"
    requires="4.76"
-   version="0.06"
+   version="0.07"
    save_state="y"
    >
 <description trim="y">
 <![CDATA[
-l33t_plugin_manager (v0.06) by Ruhamah (https://aard.l33t.xyz)
+l33t_plugin_manager (v0.07) by Ruhamah (https://aard.l33t.xyz)
 
 >    lpm
         - display summary of all plugins
@@ -311,20 +311,11 @@ function async_lpm_download_complete(retval, lpmPluginFileContent, status, heade
             printmsg('Updating from version ' .. installedVersion .. ' to version ' .. downloadedVersion)
 
             local pluginFile = io.open(GetPluginInfo(GetPluginID(), 6), 'w')
-            -- lpmPluginFileContent = string.gsub(lpmPluginFileContent, '\r', '')
+            lpmPluginFileContent = string.gsub(lpmPluginFileContent, '\r', '')
             pluginFile:write(lpmPluginFileContent)
             pluginFile:close()
 
-            if GetAlphaOption('script_prefix') == '' then
-                SetAlphaOption('script_prefix', '\\\\\\')
-            end
-            Execute(
-                GetAlphaOption("script_prefix") .. 'DoAfterSpecial('
-                ..     '1, '
-                ..     '"' .. "ReloadPlugin('" .. GetPluginID() .. "')" .. '", '
-                ..     sendto.script
-                .. ')'
-            )
+            asyncReloadPlugin()
         else
             printmsg('You already have the latest version (' .. installedVersion .. ') of l33t.xyz Plugin Manager installed.')
         end
@@ -558,6 +549,27 @@ end
 
 
 -- Utils --
+
+
+function asyncReloadPlugin(pluginId)
+    pluginId = pluginId or GetPluginID()
+
+    if GetAlphaOption('script_prefix') == '' then
+        SetAlphaOption('script_prefix', '\\\\\\')
+    end
+
+    local scriptPrefix = GetAlphaOption('script_prefix')
+
+    Execute(
+        scriptPrefix .. 'DoAfterSpecial('
+        ..      '1, '
+        ..      '"' .. "ReloadPlugin('" .. pluginId .. "')" .. '", '
+        ..      sendto.script
+        .. ')'
+    )
+end
+
+
 function md5sum(filename)
     if filename then
         f = io.open (filename, 'rb')
