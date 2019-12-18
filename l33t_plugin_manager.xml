@@ -9,12 +9,12 @@
    purpose="Manages updates for l33t.xyz plugins"
    date_written="2019-12-16 01:33:37"
    requires="4.76"
-   version="0.03"
+   version="0.04"
    save_state="y"
    >
 <description trim="y">
 <![CDATA[
-l33t_plugin_manager (v0.03) by Ruhamah (https://aard.l33t.xyz)
+l33t_plugin_manager (v0.04) by Ruhamah (https://aard.l33t.xyz)
 
 >    lpm
         - display summary of all plugins
@@ -319,7 +319,7 @@ function async_lpm_download_complete(retval, page, status, headers, full_status,
                 .. "'"
                 .. GetPluginID()
                 .. "')"
-                .. ', sendto.script)'
+                .. '", sendto.script)'
             )
         else
             printmsg('You already have the latest version of l33t.xyz Plugin Manager installed.')
@@ -477,6 +477,20 @@ function printmsg(msg)
 end
 
 
+function printSeparator()
+    ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
+end
+
+
+function printPluginLink()
+    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+end
+
+
 function OnPluginBroadcast (msg, id, name, text)
     require 'gmcphelper'
     if (id == '3e7dedbe37e44942dd46d264') then  -- GMCP Handler plugin
@@ -497,8 +511,8 @@ function OnPluginInstall()
     end
     lastListHash = GetVariable('lastListHash')
 
+    printSeparator()
     ColourTell(
-        'CornFlowerBlue', '', '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n',
         'CornFlowerBlue', '', (
             'Loaded ' .. PLUGIN_NAME
             .. ' (v' .. PLUGIN_VERSION .. ')'
@@ -506,7 +520,7 @@ function OnPluginInstall()
             .. ' ('
         )
     )
-    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+    printPluginLink()
     ColourTell(
         'CornFlowerBlue', '', (
             ').\n'
@@ -519,9 +533,9 @@ function OnPluginInstall()
         'MediumSeaGreen', '', 'lpm',
         'CornFlowerBlue', '', '" or "',
         'MediumSeaGreen', '', 'lpm help',
-        'CornFlowerBlue', '', '".\n',
-        'CornFlowerBlue', '', '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+        'CornFlowerBlue', '', '".\n'
     )
+    printSeparator()
 end
 
 
