@@ -9,12 +9,12 @@
    purpose="Manages updates for l33t.xyz plugins"
    date_written="2019-12-16 01:33:37"
    requires="4.76"
-   version="0.05"
+   version="0.06"
    save_state="y"
    >
 <description trim="y">
 <![CDATA[
-l33t_plugin_manager (v0.05) by Ruhamah (https://aard.l33t.xyz)
+l33t_plugin_manager (v0.06) by Ruhamah (https://aard.l33t.xyz)
 
 >    lpm
         - display summary of all plugins
@@ -301,16 +301,20 @@ function async_head_plugin(retval, page, status, headers, full_status, request_u
 end
 
 
-function async_lpm_download_complete(retval, page, status, headers, full_status, request_url)
+function async_lpm_download_complete(retval, lpmPluginFileContent, status, headers, full_status, request_url)
+    -- Callback for when `lpm update` or `lpm install` completes.
+    local installedVersion = GetPluginInfo(GetPluginID(), 19)
+
     if status == 200 then
-        local version = tonumber(string.match(page, '%s%s+version="([0-9%.]+)"'))
-        local installedVer = GetPluginInfo(GetPluginID(), 19)
-        if version > installedVer then
-            printmsg('Updating from version ' .. installedVer .. ' to version ' .. version)
-            local file = io.open(GetPluginInfo(GetPluginID(), 6), 'w')
-            page = string.gsub(page, '\r', '')
-            file:write(page)
-            file:close()
+        local downloadedVersion = tonumber(string.match(lpmPluginFileContent, '%s%s+version="([0-9%.]+)"'))
+        if downloadedVersion > installedVersion then
+            printmsg('Updating from version ' .. installedVersion .. ' to version ' .. downloadedVersion)
+
+            local pluginFile = io.open(GetPluginInfo(GetPluginID(), 6), 'w')
+            -- lpmPluginFileContent = string.gsub(lpmPluginFileContent, '\r', '')
+            pluginFile:write(lpmPluginFileContent)
+            pluginFile:close()
+
             if GetAlphaOption('script_prefix') == '' then
                 SetAlphaOption('script_prefix', '\\\\\\')
             end
@@ -322,7 +326,7 @@ function async_lpm_download_complete(retval, page, status, headers, full_status,
                 .. ')'
             )
         else
-            printmsg('You already have the latest version of l33t.xyz Plugin Manager installed.')
+            printmsg('You already have the latest version (' .. installedVersion .. ') of l33t.xyz Plugin Manager installed.')
         end
     else
         printmsg('Plugin update check failed...Error ' .. tostring(status))
