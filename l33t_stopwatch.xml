@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_stopwatch"
+   author="Ruhamah"
+   id="f511200e0ba60e7ecbb9d220"
+   language="Lua"
+   purpose="Stopwatch tracks your leveling up or power up speed."
+   save_state="y"
+   date_written="2019-12-17 01:33:37"
+   requires="5.07"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_stopwatch (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Stopwatch tracks your leveling up or power up speed.
+
+Future versions will also track GQ, CP, and quest times.
+
+Usage:
+
+  l33t stopwatch                 - Displays help
+  l33t stopwatch channel <channel>
+                                 - Sets the channel for reporting times. Defaults to 'say'. Also recommend using 'tracker'.      
+  l33t stopwatch level           - Displays stats for level ups.
+  l33t stopwatch pup             - Displays stats for power ups.
+  l33t stopwatch reset           - Reset all stats.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+  <trigger
+   enabled="y"
+   group="l33t"
+   keep_evaluating="y"
+   match="You gain * hit points, * mana, * moves, * practices and * trains."
+   name="l33t_level_up"
+   script="l33t_handle_level_up"
+   sequence="1"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   group="l33t"
+   keep_evaluating="y"
+   lines_to_match="2"
+   match="^Congratulations\, hero\. You have increased your powers\!\nYou gain (\d+) trains\.$"
+   multi_line="y"
+   name="l33t_power_up"
+   regexp="y"
+   script="l33t_handle_power_up"
+   sequence="2"
+  >
+  </trigger>
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t stopwatch channel ?(?<channel>.*)$"
+   regexp="y"
+   sequence="100"
+   script="l33t_stopwatch_channel"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t stopwatch level$"
+   regexp="y"
+   sequence="100"
+   script="l33t_stopwatch_level"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t stopwatch (?:(pup)|(powerup))$"
+   regexp="y"
+   sequence="100"
+   script="l33t_stopwatch_powerup"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t stopwatch reset$"
+   regexp="y"
+   sequence="100"
+   script="l33t_stopwatch_reset"
+  >
+  </alias>
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t"
+   match="l33t_stopwatch:help"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t stopwatch.*$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+</aliases>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+-- Extensions
+
+
+table.reduce = function (list, fn) 
+    local acc
+    for k, v in ipairs(list) do
+        if 1 == k then
+            acc = v
+        else
+            acc = fn(acc, v)
+        end 
+    end 
+    return acc 
+end
+
+
+function sum(a, b)
+    return a + b
+end
+
+-- Globals
+
+
+PLUGIN_ID = GetPluginID()
+PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
+PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
+PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
+PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
+PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
+PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
+
+PLUGIN_URL = 'https://aard.l33t.xyz'
+
+
+-- Script Locals
+
+
+local lastLevelUpTimestamp = nil
+local levelUpDurations = {}
+local totalLevelsGained = 0
+
+local lastPowerUpTimestamp = nil
+local powerUpDurations = {}
+local totalPowerUpsGained = 0
+
+
+-- Core Functions
+
+
+function l33t_stopwatch_channel(name, line, wildcards)
+    local inputChannel = GetAliasWildcard(name, 'channel')
+    local savedChannel = GetVariable('stopwatch_channel')
+
+    local channel = string.len(inputChannel) > 0 and inputChannel or savedChannel or 'say'
+
+    SetVariable('stopwatch_channel', channel)
+
+    if string.len(inputChannel) == 0 and savedChannel ~= nil then
+        ColourTell(
+            'CornFlowerBlue', '', 'l33t stopwatch channel is currently set to: ',
+            'Yellow', '', channel,
+            'CornFlowerBlue', '', '.\n'
+        )
+    else
+        ColourTell(
+            'CornFlowerBlue', '', 'Set l33t stopwatch channel to: ',
+            'Yellow', '', channel,
+            'CornFlowerBlue', '', '.\n'
+        )
+    end
+end
+
+
+function l33t_handle_level_up(name, line, wildcards)
+    local timestamp = os.time()
+
+    totalLevelsGained = totalLevelsGained + 1
+
+    if lastLevelUpTimestamp ~= nil then
+        local duration = timestamp - lastLevelUpTimestamp
+        table.insert(levelUpDurations, duration)
+    end
+
+    lastLevelUpTimestamp = timestamp
+
+    l33t_stopwatch_level()
+end
+
+
+function l33t_handle_power_up(name, line, wildcards)
+    local timestamp = os.time()
+
+    totalPowerUpsGained = totalPowerUpsGained + 1
+
+    if lastPowerUpTimestamp ~= nil then
+        local duration = timestamp - lastPowerUpTimestamp
+        table.insert(powerUpDurations, duration)
+    end
+
+    lastPowerUpTimestamp = timestamp
+
+    l33t_stopwatch_powerup()
+end
+
+
+function l33t_stopwatch_level(name, line, wildcards)
+    if lastLevelUpTimestamp == nil or totalLevelsGained < 2 or #levelUpDurations == 0 then
+       Note('No level ups recorded yet. Level up ' .. math.max(2 - totalLevelsGained, 0) .. ' more time(s) to start timer.')
+    else
+        local lastLevelUpDuration = levelUpDurations[#levelUpDurations]
+        local averageDuration = table.reduce(levelUpDurations, sum) / (totalLevelsGained - 1)
+
+        local durationString = getDurationString(lastLevelUpDuration)
+        local averageDurationString = getDurationString(averageDuration)
+
+        local msg = (
+            '@BLast Level-Up Duration@W: @C' .. durationString .. '@w'
+            .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w'
+            .. ' (over @C' .. totalLevelsGained .. '@w levels).'
+        )
+
+        local channel = GetVariable('stopwatch_channel') or 'say'
+        SendNoEcho(channel .. ' ' .. msg)
+    end
+end
+
+
+function l33t_stopwatch_powerup(name, line, wildcards)
+    if lastPowerUpTimestamp == nil or totalPowerUpsGained < 2 or #powerUpDurations == 0 then
+       Note('No power-ups recorded yet. Power up ' .. math.max(2 - totalPowerUpsGained, 0) .. ' more time(s) to start timer.')
+    else
+        local lastPowerUpDuration = powerUpDurations[#powerUpDurations]
+        local averageDuration = table.reduce(powerUpDurations, sum) / (totalPowerUpsGained - 1)
+
+        local durationString = getDurationString(lastPowerUpDuration)
+        local averageDurationString = getDurationString(averageDuration)
+
+        local msg = (
+            '@BLast Power-Up Duration@W: @C' .. durationString .. '@w'
+            .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w'
+            .. ' (over @C' .. totalPowerUpsGained .. '@w power-ups).'
+        )
+
+        local channel = GetVariable('stopwatch_channel') or 'say'
+        SendNoEcho(channel .. ' ' .. msg)
+    end
+end
+
+
+function l33t_stopwatch_reset(name, line, wildcards)
+    resetState()
+end
+
+-- Helper Functions
+
+
+function resetState()
+    Note('Resetting l33t stopwatch state')
+
+    lastLevelUpTimestamp = nil
+    levelUpDurations = {}
+    totalLevelsGained = 0
+
+    lastPowerUpTimestamp = nil
+    powerUpDurations = {}
+    totalPowerUpsGained = 0
+end
+
+
+-- Help
+
+
+function OnHelp (sName, sLine, wildcards)
+    Note(GetPluginInfo(GetPluginID(), 3))
+end
+
+
+-- Util Functions
+
+function printSeparator()
+    ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
+end
+
+
+function printPluginLink()
+    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+end
+
+
+function getDurationString(duration)
+    local seconds = duration
+    local hours = math.floor(seconds / 3600)
+    seconds = seconds - (hours * 3600)
+    local minutes = math.floor(seconds / 60)
+    seconds = seconds - (minutes * 60)
+
+    local durationString = ''
+    if hours > 0 then
+        durationString = durationString .. hours .. ' hours'
+    end
+
+    if minutes > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. minutes .. ' minutes'
+    end
+
+    if seconds > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. seconds .. ' seconds'
+    end
+
+    return durationString
+end
+
+
+function loaded()
+    printSeparator()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' .. PLUGIN_NAME
+            .. ' (v' .. PLUGIN_VERSION .. ')'
+            .. ' by ' .. PLUGIN_AUTHOR
+            .. ' ('
+        )
+    )
+    printPluginLink()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            .. 'Loaded '
+            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+            .. PLUGIN_NUM_ALIASES .. ' aliases, '
+            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'l33t stopwatch help',
+        'CornFlowerBlue', '', '".\n'
+    )
+    printSeparator()
+end
+
+
+loaded()
+
+
+]]>
+</script>
+
+
+</muclient>
