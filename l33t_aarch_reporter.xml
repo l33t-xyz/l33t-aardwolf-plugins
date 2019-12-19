@@ -12,12 +12,12 @@
    save_state="y"
    date_written="2019-12-16 01:33:37"
    requires="5.06"
-   version="0.06"
+   version="0.07"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_aarch_reporter (v0.06) by Ruhamah (https://aard.l33t.xyz)
+l33t_aarch_reporter (v0.07) by Ruhamah (https://aard.l33t.xyz)
 
 Usage:
 
@@ -26,10 +26,14 @@ Usage:
   l33t aarch help                - Displays help
   l33t aarch <containerId>       - Sets the <containerId> for Aarchaeology
                                    reports and run the report
+  report aarch extras [channel]  - Reports to [channel or says the Aarchaeology
+                                   items you have that are extras
   report aarch missing [channel] - Reports to [channel] or says the Aarchaelogy
                                    items that you are missing
   report aarch pieces [channel]  - Reports to [channel] or says the Aarchaelogy
                                    items that you have
+  report aarch turnin [channel]  - Reports to [channel] or says the Aarchaelogy
+                                   items that you need to turn in now
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]>
@@ -73,7 +77,7 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="^report aarch ?(?P<mode>(pieces)|(missing)) ?(?P<channel>.*)$"
+   match="^report aarch ?(?P<mode>(extras?)|(pieces)|(missing)|(turnin)) ?(?P<channel>.*)$"
    name="l33t_aarch_report_channel"
    regexp="y"
    script="reportAarch"
@@ -230,6 +234,11 @@ function reportAarch(name, line, wildcards)
        local inputChannel = GetAliasWildcard(name, 'channel')
        local channel = string.len(inputChannel) > 0 and inputChannel or 'say'
 
+
+       if inputMode == 'extra' then
+           inputMode = 'extras'  -- normalize 'extra' to 'extras'
+       end
+
        reportMode = inputMode
        reportChannel = channel
 
@@ -339,7 +348,7 @@ function stopCapturingInvdata(name, line, wildcards)
     EnableTrigger('l33t_aarch_invdata_item', 0)
     local report = getAarchReport()
 
-    if reportMode == 'pieces' or reportMode == 'missing' then
+    if reportMode == 'extras' or reportMode == 'pieces' or reportMode == 'missing' or reportMode == 'turnin' then
         reportToChannel(report)
     elseif reportMode == 0 then
         displayReport(report)
@@ -349,10 +358,11 @@ end
 
 
 function addAarchItem(itemName)
-    local count = aarchItems[itemName] or 0
-    aarchItems[itemName] = (count + 1)
-
     aarchNum = getAarchNumber(getAarchName(itemName))
+
+    local count = aarchItems[aarchNum] or 0
+    aarchItems[aarchNum] = (count + 1)
+
     addAarchCollected(aarchNum)
 end
 
@@ -376,13 +386,13 @@ function getAarchReport()
      local piecesPrefix = reportMode == 'pieces' and '' or '- '
      local piecesSuffix = reportMode == 'pieces' and '' or '\n'
 
-     for itemName, count in orderedPairs(aarchItems) do
+     for aarchNum, count in orderedPairs(aarchItems) do
          if reportMode == 'pieces' and i > 0 then
              pieces = pieces .. ', '
          end
-         local aarchNum = getAarchNumber(getAarchName(itemName))
+         local formattedName = getFormattedAarchItemName(aarchNum)
          local reward = getAarchReward(aarchNum)
-         pieces = pieces .. piecesPrefix .. count .. 'x ' .. itemName .. ' @C(#' .. aarchNum .. ')@w (@Y' .. reward.amount .. ' ' .. reward.type .. '@w)' .. piecesSuffix
+         pieces = pieces .. piecesPrefix .. count .. 'x ' .. formattedName .. ' @C(#' .. aarchNum .. ')@w (@Y' .. reward.amount .. ' ' .. reward.type .. '@w)' .. piecesSuffix
          i = i + 1
      end
 
@@ -413,17 +423,43 @@ function getAarchReport()
              if string.len(missing) > 0 then
                  missing = missing .. ', '
              end
-             local name = getAarchItemNameFromNumber(n)
-             missing = missing .. '@R(@YAarchaeology@R)@W ' .. name .. ' @C(#' .. n .. ')@w'
+             local formattedName = getFormattedAarchItemName(n)
+             missing = missing .. formattedName .. ' @C(#' .. n .. ')@w'
+         end
+         n = n + 1
+     end
+
+     local extras = ''
+     local turnin = ''
+     local n = 1
+     while n <= 50 do
+         if aarchItems[n] ~= nil then
+             local formattedName = getFormattedAarchItemName(n)
+
+             if aarchPamphlets[n] == nil then
+                 -- items that still need to be turned in
+                 if string.len(turnin) > 0 then
+                    turnin = turnin .. ', '
+                 end
+                 turnin = turnin .. formattedName .. ' @C(#' .. n .. ')@w'
+             else
+                 -- extras
+                 if string.len(extras) > 0 then
+                    extras = extras .. ', '
+                 end
+                 extras = extras .. formattedName .. ' @C(#' .. n .. ')@w'
+             end
          end
          n = n + 1
      end
 
      local report = {
          collected = collected,
+         extras = extras,
          pieces = pieces,
          missing = missing,
-         pamphlets = pamphlets
+         pamphlets = pamphlets,
+         turnin = turnin
      }
      return report
 end
@@ -432,10 +468,14 @@ end
 function reportToChannel(report)
     local msg = nil
 
-    if reportMode == 'pieces' then
-        msg = '@YAarchaeology@w items available to turn in: ' .. report.pieces
+    if reportMode == 'extras' then
+        msg = '@YAarchaeology@w item extras to barter/trade/keep: ' .. report.extras
+    elseif reportMode == 'pieces' then
+        msg = '@YAarchaeology@w items in inventory: ' .. report.pieces
     elseif reportMode == 'missing' then
         msg = '@YAarchaeology@w items missing: ' .. report.missing
+    elseif reportMode == 'turnin' then
+        msg = '@YAarchaeology@w items to turn in: ' .. report.turnin
     end
 
     SendNoEcho(reportChannel .. ' ' .. msg)
@@ -446,8 +486,10 @@ function displayReport(report)
     local reportStr = (
        'Aarchaeology items collected (items and pamphlets):\n' .. report.collected .. '\n\n'
        .. 'Aarchaeology pamphlets collected:\n' .. report.pamphlets .. '\n\n'
-       .. 'Aarchaeology items available to turn in:\n' .. report.pieces .. '\n'
-       .. 'Aarchaeology items missing:\n' .. report.missing .. '\n'
+       .. 'Aarchaeology items in inventory:\n' .. report.pieces .. '\n\n'
+       .. 'Aarchaeology items missing:\n' .. report.missing .. '\n\n'
+       .. 'Aarchaeology extras:\n' .. report.extras .. '\n\n'
+       .. 'Aarchaeology items to turn in:\n' .. report.turnin .. '\n\n'
     )
 
     local savedContainerId = GetVariable('l33t_aarch_container_id')
@@ -473,6 +515,13 @@ end
 function getAarchItemNameFromNumber(aarchNum)
     local name = AARCH_NUM_ITEM_MAP[aarchNum]
     return name
+end
+
+
+function getFormattedAarchItemName(aarchNum)
+    local name = getAarchItemNameFromNumber(aarchNum)
+    local formattedName = '@R(@YAarchaeology@R)@W ' .. name
+    return formattedName
 end
 
 
