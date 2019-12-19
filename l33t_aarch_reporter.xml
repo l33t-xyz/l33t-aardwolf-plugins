@@ -19,6 +19,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 l33t_aarch_reporter (v0.07) by Ruhamah (https://aard.l33t.xyz)
 
+l33t Aarchaeology Report analyzes a container that you specify and
+generates a variety of reports.
+
 Usage:
 
   l33t aarch                     - Displays help or Aarchaeology report
@@ -129,6 +132,10 @@ PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
 PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
 
 PLUGIN_URL = 'https://aard.l33t.xyz'
+
+
+-- Script Locals
+
 
 reportMode = 0
 reportChannel = ''
