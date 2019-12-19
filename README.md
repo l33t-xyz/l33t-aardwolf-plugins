@@ -11,3 +11,4 @@
 ## Other <code>l33t</code> Plugins
 
 - **l33t Aarchaelogy Reporter** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_aarch_reporter.xml)) - Tracks and reports collected and missing Aarchaeology items.
+- **l33t Stopwatch** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_stopwatch.xml)) - Tracks your leveling up or power up speed.
