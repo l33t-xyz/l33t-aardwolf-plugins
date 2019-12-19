@@ -469,7 +469,7 @@ function reportToChannel(report)
     local msg = nil
 
     if reportMode == 'extras' then
-        msg = '@YAarchaeology@w item extras to barter/trade/keep: ' .. report.extras
+        msg = '@YAarchaeology@w item extras to barter/trade/sell: ' .. report.extras
     elseif reportMode == 'pieces' then
         msg = '@YAarchaeology@w items in inventory: ' .. report.pieces
     elseif reportMode == 'missing' then
