@@ -364,7 +364,10 @@ function async_plugin_download_complete(retval, page, status, headers, full_stat
             end
             currFile:close()
         end
-        os.remove(folder .. 'temp_update.zip')
+
+        -- TODO: this is failing because of: https://stackoverflow.com/questions/29532422/lua-os-remove-folder-results-in-permission-denied
+        a, b = os.remove(folder .. 'temp_update.zip')
+
         printmsg('Update succeeded, loading/reloading plugins.')
         printmsg('----------------------------------------------')
 
@@ -380,11 +383,13 @@ function async_plugin_download_complete(retval, page, status, headers, full_stat
             local xmlFile = xmlFiles[i]
             --print(xmlFiles[i].filename, xmlFiles[i].pluginId)
             --local version = tonumber(string.match(page, '%s%s+version="([0-9%.]+)"'))
+
             if not (IsPluginInstalled(xmlFile.pluginId) and GetPluginInfo(xmlFile.pluginId, 17)) then
                 LoadPlugin(folder .. xmlFile.filename)
             else
                 ReloadPlugin(xmlFile.pluginId)
             end
+
             installedPlugins[xmlFile.pluginId] = headers['etag']
         end
         SaveState()
