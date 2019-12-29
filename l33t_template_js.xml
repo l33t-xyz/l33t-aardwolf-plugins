@@ -49,7 +49,7 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="l33t_utils:help"
+   match="l33t_xxxxx:help"
    script="OnHelp"
    sequence="999"
   >
@@ -57,7 +57,7 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="^l33t utils.*$"
+   match="^l33t xxxxx.*$"
    regexp="y"
    sequence="999"
    script="OnHelp"
