@@ -93,8 +93,30 @@ function OnHelp (sName, sLine, wildcards) {
 // Plugin Lifecycle
 
 
-function OnPluginInInstall() {
-    loaded();
+function OnPluginInstall() {
+    printSeparator();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' + PLUGIN_NAME
+            + ' (v' + PLUGIN_VERSION + ')'
+            + ' by ' + PLUGIN_AUTHOR
+            + ' ('
+        )
+    );
+    printPluginLink();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            + 'Loaded '
+            + PLUGIN_NUM_TRIGGERS + ' triggers, '
+            + PLUGIN_NUM_ALIASES + ' aliases, '
+            + PLUGIN_NUM_TIMERS + ' timers.\n\n'
+        )
+    );
+    world.ColourTell('CornFlowerBlue', '', 'Type "');
+    world.ColourTell('MediumSeaGreen', '', 'l33t XXXXXXXX help');
+    world.ColourTell('CornFlowerBlue', '', '".\n');
+    printSeparator();
 }
 
 
@@ -117,33 +139,6 @@ function printSeparator() {
 
 function printPluginLink() {
     world.Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1);
-}
-
-
-function loaded() {
-    printSeparator();
-    world.ColourTell(
-        'CornFlowerBlue', '', (
-            'Loaded ' + PLUGIN_NAME
-            + ' (v' + PLUGIN_VERSION + ')'
-            + ' by ' + PLUGIN_AUTHOR
-            + ' ('
-        )
-    );
-    printPluginLink();
-    world.ColourTell(
-        'CornFlowerBlue', '', (
-            ').\n'
-            + 'Loaded '
-            + PLUGIN_NUM_TRIGGERS + ' triggers, '
-            + PLUGIN_NUM_ALIASES + ' aliases, '
-            + PLUGIN_NUM_TIMERS + ' timers.\n\n'
-        ),
-        'CornFlowerBlue', '', 'Type "',
-        'MediumSeaGreen', '', 'l33t XXXXXXXXX help',
-        'CornFlowerBlue', '', '".\n'
-    );
-    printSeparator();
 }
 
 
