@@ -1,6 +1,6 @@
 # [<code>aard.l33t.xyz</code>](https://aard.l33t.xyz) / <code>l33t-aardwolf-plugins</code>
 
-*These are very l33t indeed.*
+*It's all about the metagame. These are very l33t indeed.*
 
 *To use, click the download links to download and install the plugin XML into MUSHclient.*
 
@@ -11,4 +11,6 @@
 ## Other <code>l33t</code> Plugins
 
 - **l33t Aarchaelogy Reporter** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_aarch_reporter.xml)) - Tracks and reports collected and missing Aarchaeology items.
+- **l33t Beacons** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_beacons.xml)) - Saves rooms to keywords to enable fast recall using those keywords.
 - **l33t Stopwatch** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_stopwatch.xml)) - Tracks your leveling up or power up speed.
+- **l33t utils (JScript)** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_utils_js.xml)) - Various l33t convenience utilities.
