@@ -24,7 +24,7 @@ Moar description
 
 Usage:
 
-  l33t command                   - Help string
+  l33t command [help]            - Displays help
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]>
