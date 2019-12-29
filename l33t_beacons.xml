@@ -1,0 +1,544 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_beacons"
+   author="Ruhamah"
+   id="50bfe7617d60469685e1470c"
+   language="Lua"
+   purpose="l33t beacons saves rooms to keywords to enable fast recall using those keywords"
+   save_state="y"
+   date_written="2019-12-29 01:33:37"
+   requires="5.06"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_beacons (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+Saves rooms to keywords to enable fast recall using those keywords.
+
+Beacon keywords MUST only contain the follow characters
+  - lowercase a-z
+  - numbers 0-9
+  - underscore
+
+Usage:
+
+  l33t beacon [help]             - Displays help
+  lbeacon help
+
+  lbeacon list                   - List all saved l33t beacons
+
+  lbeacon <keyword>              - Saves current room to keyword
+  lbeacon remove <keyword>       - Remove a previously saved beacon
+  lrt <keyword>                  - Run to previously set l33t beacon
+                                   using 'mapper goto roomid'
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lbeacon list$"
+   regexp="y"
+   sequence="90"
+   script="list_beacons"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lbeacon help$"
+   regexp="y"
+   sequence="90"
+   script="OnHelp"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lbeacon ?(?P<keyword>[a-z0-9_]*)$"
+   regexp="y"
+   sequence="101"
+   script="set_beacon"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lbeacon remove ?(?P<keyword>[a-z0-9_]*)$"
+   regexp="y"
+   sequence="101"
+   script="remove_beacon"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lrt ?(?P<keyword>[a-z0-9_]*)$"
+   regexp="y"
+   sequence="102"
+   script="goto_beacon"
+  >
+  </alias>
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t"
+   match="l33t_beacons:help"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t beacon.*$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+</aliases>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+-- See: https://github.com/fiendish/aardwolfclientpackage/wiki/Using-GMCP
+require "gmcphelper" -- adds the gmcp() function for simplifying data access
+
+
+-- Extensions
+
+
+table.reduce = function (list, fn) 
+    local acc
+    for k, v in ipairs(list) do
+        if 1 == k then
+            acc = v
+        else
+            acc = fn(acc, v)
+        end 
+    end 
+    return acc 
+end
+
+
+function sum(a, b)
+    return a + b
+end
+
+-- Globals
+
+
+PLUGIN_ID = GetPluginID()
+PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
+PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
+PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
+PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
+PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
+PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
+
+PLUGIN_URL = 'https://aard.l33t.xyz'
+
+
+-- Script Locals
+
+
+local currentRoomId = nil
+local currentRoomName = nil
+local currentZone = nil
+
+
+function handleGMCP(text)
+    --[[
+    Room Format:
+
+    {
+        ['details'] = 'safe',
+        ['name'] = 'The Grand City of Aylor',
+        ['num'] = '32418',
+        ['exits'] = {
+            ['s'] = '32419',
+            ['u'] = '35200',
+            ['d'] = '32615',
+            ['w'] = '30518',
+            ['n'] = '32539',
+            ['e'] = '32698'
+        },
+        ['terrain'] = 'aylorcity',
+        ['coord'] = {
+            ['y'] = '20',
+            ['x'] = '30',
+            ['cont'] = '0',
+            ['id'] = '0'
+        },
+        ['outside'] = '0',
+        ['zone'] = 'aylor'
+    }
+
+--]]
+
+    if text == 'room.info' then
+        local roomInfo = gmcp('room.info')
+        currentRoomId = roomInfo.num
+        currentRoomName = roomInfo.name
+        currentZone = roomInfo.zone
+    end
+end
+
+
+-- Core Functions
+
+
+function list_beacons(name, line, wildcards)
+    Note('These are the l33t beacons you have previously set:')
+    local variableNames = GetPluginVariableList(GetPluginID())
+
+    for varName, _ in orderedPairs(variableNames) do
+       local keyword = string.match(varName, 'l33t_beacon_(.*)')
+       if keyword ~= nil then
+           local roomId = getRoomIdForKeyword(keyword)
+           Note('- ' .. keyword .. ' (' .. roomId .. ')')
+       end
+    end
+
+end
+
+
+function set_beacon(name, line, wildcards)
+    local keyword = GetAliasWildcard(name, 'keyword')
+
+    if keyword == '' then
+        handleNoKeyword()
+    elseif currentRoomId == nil then
+        Note("Current room is not known. Try moving around or 'look'.")
+    else
+        SetVariable('l33t_beacon_' .. keyword, currentRoomId)
+        Note('Set l33t beacon named [' .. keyword .. '] to room (' .. currentRoomId .. ').')
+    end
+end
+
+
+function remove_beacon(name, line, wildcards)
+    local keyword = GetAliasWildcard(name, 'keyword')
+
+    if keyword == '' then
+        handleNoKeyword()
+    else
+        local varName = getVarNameForKeyword(keyword)
+        local roomId = getRoomIdForKeyword(keyword)
+        if roomId == nil then
+            handleNoRoomId(keyword)
+        else
+            DeleteVariable(varName)
+            Note('Removed beacon named [' .. keyword .. '] to (' .. roomId .. ').')
+        end
+    end
+end
+
+
+function goto_beacon(name, line, wildcards)
+    local keyword = GetAliasWildcard(name, 'keyword')
+
+    if keyword == '' then
+        handleNoKeyword()
+    else
+        local roomId = getRoomIdForKeyword(keyword)
+        if roomId == nil then
+            handleNoRoomId(keyword)
+        else
+            Execute('mapper goto ' .. roomId)
+        end
+    end
+end
+
+
+-- Helper Functions
+
+
+function handleNoKeyword()
+    Note('Please specify a l33t beacon keyword (a-z, 0-9, _).')
+end
+
+
+function handleNoRoomId(keyword)
+    Note('No l33t beacon named [' .. keyword .. '].')
+end
+
+
+function getVarNameForKeyword(keyword)
+    local varName = 'l33t_beacon_' .. keyword
+    return varName
+end
+
+function getRoomIdForKeyword(keyword)
+    local varName = getVarNameForKeyword(keyword)
+    local roomId = GetVariable(varName)
+    return roomId
+end
+
+
+-- Help
+
+
+function OnHelp (sName, sLine, wildcards)
+    Note(GetPluginInfo(GetPluginID(), 3))
+end
+
+
+-- Plugin Lifecycle
+
+
+function OnPluginInstall()
+    printSeparator()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' .. PLUGIN_NAME
+            .. ' (v' .. PLUGIN_VERSION .. ')'
+            .. ' by ' .. PLUGIN_AUTHOR
+            .. ' ('
+        )
+    )
+    printPluginLink()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            .. 'Loaded '
+            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+            .. PLUGIN_NUM_ALIASES .. ' aliases, '
+            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'l33t beacons help',
+        'CornFlowerBlue', '', '".\n'
+    )
+    printSeparator()
+end
+
+
+function OnPluginSaveState()
+end
+
+
+function OnPluginBroadcast(msg, id, name, text)
+  if id == "3e7dedbe37e44942dd46d264" then -- message from the GMCP Handler
+     handleGMCP(text)
+  end
+end
+
+
+-- Util Functions
+
+
+function printSeparator()
+    ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
+end
+
+
+function printPluginLink()
+    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+end
+
+
+function getDurationString(duration)
+    local seconds = duration
+    local hours = math.floor(seconds / 3600)
+    seconds = seconds - (hours * 3600)
+    local minutes = math.floor(seconds / 60)
+    seconds = seconds - (minutes * 60)
+
+    local durationString = ''
+    if hours > 0 then
+        durationString = durationString .. hours .. ' hours'
+    end
+
+    if minutes > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. minutes .. ' minutes'
+    end
+
+    if seconds > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. seconds .. ' seconds'
+    end
+
+    return durationString
+end
+
+
+-- From: https://stackoverflow.com/a/42062321/865091
+function print_table(node)
+    local cache, stack, output = {},{},{}
+    local depth = 1
+    local output_str = "{\n"
+
+    while true do
+        local size = 0
+        for k,v in pairs(node) do
+            size = size + 1
+        end
+
+        local cur_index = 1
+        for k,v in pairs(node) do
+            if (cache[node] == nil) or (cur_index >= cache[node]) then
+
+                if (string.find(output_str,"}",output_str:len())) then
+                    output_str = output_str .. ",\n"
+                elseif not (string.find(output_str,"\n",output_str:len())) then
+                    output_str = output_str .. "\n"
+                end
+
+                -- This is necessary for working with HUGE tables otherwise we run out of memory using concat on huge strings
+                table.insert(output,output_str)
+                output_str = ""
+
+                local key
+                if (type(k) == "number" or type(k) == "boolean") then
+                    key = "["..tostring(k).."]"
+                else
+                    key = "['"..tostring(k).."']"
+                end
+
+                if (type(v) == "number" or type(v) == "boolean") then
+                    output_str = output_str .. string.rep('\t',depth) .. key .. " = "..tostring(v)
+                elseif (type(v) == "table") then
+                    output_str = output_str .. string.rep('\t',depth) .. key .. " = {\n"
+                    table.insert(stack,node)
+                    table.insert(stack,v)
+                    cache[node] = cur_index+1
+                    break
+                else
+                    output_str = output_str .. string.rep('\t',depth) .. key .. " = '"..tostring(v).."'"
+                end
+
+                if (cur_index == size) then
+                    output_str = output_str .. "\n" .. string.rep('\t',depth-1) .. "}"
+                else
+                    output_str = output_str .. ","
+                end
+            else
+                -- close the table
+                if (cur_index == size) then
+                    output_str = output_str .. "\n" .. string.rep('\t',depth-1) .. "}"
+                end
+            end
+
+            cur_index = cur_index + 1
+        end
+
+        if (size == 0) then
+            output_str = output_str .. "\n" .. string.rep('\t',depth-1) .. "}"
+        end
+
+        if (#stack > 0) then
+            node = stack[#stack]
+            stack[#stack] = nil
+            depth = cache[node] == nil and depth + 1 or depth - 1
+        else
+            break
+        end
+    end
+
+    -- This is necessary for working with HUGE tables otherwise we run out of memory using concat on huge strings
+    table.insert(output,output_str)
+    output_str = table.concat(output)
+
+    print(output_str)
+end
+
+
+--[[
+Ordered table iterator, allow to iterate on the natural order of the keys of a
+table.
+
+From http://lua-users.org/wiki/SortedIteration
+]]
+
+
+function __genOrderedIndex( t )
+    local orderedIndex = {}
+    for key in pairs(t) do
+        table.insert( orderedIndex, key )
+    end
+    table.sort( orderedIndex )
+    return orderedIndex
+end
+
+
+function orderedNext(t, state)
+    -- Equivalent of the next function, but returns the keys in the alphabetic
+    -- order. We use a temporary ordered key table that is stored in the
+    -- table being iterated.
+
+    local key = nil
+    --print("orderedNext: state = "..tostring(state) )
+    if state == nil then
+        -- the first time, generate the index
+        t.__orderedIndex = __genOrderedIndex( t )
+        key = t.__orderedIndex[1]
+    else
+        -- fetch the next value
+        for i = 1,table.getn(t.__orderedIndex) do
+            if t.__orderedIndex[i] == state then
+                key = t.__orderedIndex[i+1]
+            end
+        end
+    end
+
+    if key then
+        return key, t[key]
+    end
+
+    -- no more value to return, cleanup
+    t.__orderedIndex = nil
+    return
+end
+
+function orderedPairs(t)
+    -- Equivalent of the pairs() function on tables. Allows to iterate
+    -- in order
+    return orderedNext, t, nil
+end
+--[[
+End Ordered Table functions
+]]
+
+
+]]>
+</script>
+
+
+</muclient>

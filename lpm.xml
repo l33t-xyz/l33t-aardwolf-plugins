@@ -9,6 +9,14 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
+    <name>l33t beacons</name>
+    <author>Ruhamah</author>
+    <description>Saves rooms to keywords to enable fast recall using those keywords.</description>
+    <id>50bfe7617d60469685e1470c</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_beacons-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+  <plugin>
     <name>l33t stopwatch</name>
     <author>Ruhamah</author>
     <description>Tracks your leveling up or power up speed.</description>
