@@ -16,5 +16,13 @@
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_stopwatch-latest.zip</download>
     <installpath>0</installpath>
   </plugin>
+  <plugin>
+    <name>l33t utils</name>
+    <author>Ruhamah</author>
+    <description>Various l33t convenience utilities.</description>
+    <id>a589fcd28fab4b2b93c9ace2</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_utils-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
 
 </pluginsListing>

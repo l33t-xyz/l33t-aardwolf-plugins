@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_utils_js"
+   author="Ruhamah"
+   id="a589fcd28fab4b2b93c9ace2"
+   language="JScript"
+   purpose="l33t convenience utilities written in JScript"
+   save_state="y"
+   date_written="2019-12-28 13:33:37"
+   requires="5.06"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_utils_js (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Utils is a bunch of convenience utilities and aliases.
+
+Usage:
+
+  l33t utils [help]              - Displays help
+
+
+  cycle N command1[,command2[,command3[,command4,[...,commandN]]]]
+                                 - Repeats a group of comma-separated
+                                   commands N times
+
+  Examples:
+    cycle 20 hold trivia,gtrivia
+    cycle 3 sit,stand,jump
+
+  Nx <command>                   - Repeats a command N times, where N
+                                   is any integer.
+
+  Examples:
+    3x clap
+    5x give Ruhamah trivia
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.js"/>
+
+<!--  Triggers  -->
+
+<triggers>
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^cycle (\d+) (.*)$"
+   name="cycle"
+   regexp="y"
+   script="cycle"
+   sequence="5"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^(\d+)x (.*)$"
+   name="repeat"
+   regexp="y"
+   script="repeat"
+   sequence="5"
+  >
+  </alias>
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t"
+   match="l33t_utils:help"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t utils.*$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+</aliases>
+
+<!--  Timers  -->
+
+<timers>
+</timers>
+
+<!--  Variables  -->
+
+<variables>
+</variables>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+// Globals
+
+
+var PLUGIN_ID = GetPluginID();
+var PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1);
+var PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2);
+var PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19);
+var PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9);
+var PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10);
+var PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11);
+
+var PLUGIN_URL = 'https://aard.l33t.xyz';
+
+
+// Core Functions
+
+
+function cycle(name, line, wildcards) {
+    var n = parseInt(world.GetAliasWildcard(name, '1').trim()) || 1;
+    var commandsStr = world.GetAliasWildcard(name, '2').trim();
+
+    var parts = commandsStr.split(',');
+    var commands = [];
+    for (var i=0; i < parts.length; ++i) {
+        var command = parts[i].trim();
+        commands.push(command);
+    }
+
+    world.Note('Cycling commands [' + commands.join(', ') + '] x' + n);
+    for (var i=0; i < n; ++i) {
+        for (var j=0; j < commands.length; ++j) {
+            var command = commands[j];
+            world.Execute(command);
+        }
+    }
+}
+
+
+function repeat(name, line, wildcards) {
+    var n = parseInt(world.GetAliasWildcard(name, '1'). trim());
+    var command = world.GetAliasWildcard(name, '2').trim();
+    world.Note('Repeating command [' + command + '] x' + n);
+
+    for (var i=0; i < n; ++i) {
+        world.Execute(command);
+    }
+}
+
+
+// Help
+
+
+function OnHelp (sName, sLine, wildcards) {
+    world.Note(world.GetPluginInfo(world.GetPluginID(), 3));
+}
+
+
+// Plugin Lifecycle
+
+
+function OnPluginInstall() {
+    printSeparator();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' + PLUGIN_NAME
+            + ' (v' + PLUGIN_VERSION + ')'
+            + ' by ' + PLUGIN_AUTHOR
+            + ' ('
+        )
+    );
+    printPluginLink();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            + 'Loaded '
+            + PLUGIN_NUM_TRIGGERS + ' triggers, '
+            + PLUGIN_NUM_ALIASES + ' aliases, '
+            + PLUGIN_NUM_TIMERS + ' timers.\n\n'
+        )
+    );
+    world.ColourTell('CornFlowerBlue', '', 'Type "');
+    world.ColourTell('MediumSeaGreen', '', 'l33t utils help');
+    world.ColourTell('CornFlowerBlue', '', '".\n');
+    printSeparator();
+}
+
+
+function OnPluginSaveState() {
+    // do nothing
+}
+
+
+// Util Functions
+
+
+function printSeparator() {
+    world.ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    );
+}
+
+
+function printPluginLink() {
+    world.Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1);
+}
+
+
+//------------------------------------------------------------------------------
+// JS Utils
+//------------------------------------------------------------------------------
+
+if (!String.prototype.trim) {
+    String.prototype.trim = function () {
+        return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+    };
+}
+
+function zfill(x, size) {
+    var s = '' + x;
+    while (s.length < size) {
+        s = '0' + s;
+    }
+    return s;
+}
+
+
+]]>
+</script>
+
+
+</muclient>
