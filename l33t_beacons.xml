@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2019-12-29 01:33:37"
    requires="5.06"
-   version="0.01"
+   version="0.02"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_beacons (v0.01) by Ruhamah (https://aard.l33t.xyz)
+l33t_beacons (v0.02) by Ruhamah (https://aard.l33t.xyz)
 
 Saves rooms to keywords to enable fast recall using those keywords.
 
@@ -30,12 +30,15 @@ Usage:
   l33t beacon [help]             - Displays help
   lbeacon help
 
-  lbeacon list                   - List all saved l33t beacons
-
-  lbeacon <keyword>              - Saves current room to keyword
-  lbeacon remove <keyword>       - Remove a previously saved beacon
-  lrt <keyword>                  - Run to previously set l33t beacon
+  lbeacon set <keyword>          - Saves current room to keyword
+  lbeacon goto <keyword>         - Run to previously set l33t beacon
                                    using 'mapper goto roomid'
+  lbeacon walkto <keyword>       - Walk to previously set l33t beacon
+                                   using 'mapper walkto roomid'
+  lbeacon show <keyword>         - Shows the roomid for a keyword
+  lbeacon remove <keyword>       - Remove a previously saved beacon
+
+  lbeacon list                   - List all saved l33t beacons
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]>
@@ -59,15 +62,6 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="^lbeacon list$"
-   regexp="y"
-   sequence="90"
-   script="list_beacons"
-  >
-  </alias>
-  <alias
-   enabled="y"
-   group="l33t"
    match="^lbeacon help$"
    regexp="y"
    sequence="90"
@@ -77,7 +71,7 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="^lbeacon ?(?P<keyword>[a-z0-9_]*)$"
+   match="^lbeacon set ?(?P<keyword>[a-z0-9_]*)$"
    regexp="y"
    sequence="101"
    script="set_beacon"
@@ -86,19 +80,46 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
+   match="^lbeacon goto ?(?P<keyword>[a-z0-9_]*)$"
+   regexp="y"
+   sequence="102"
+   script="goto_beacon"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lbeacon walkto ?(?P<keyword>[a-z0-9_]*)$"
+   regexp="y"
+   sequence="103"
+   script="walkto_beacon"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lbeacon show ?(?P<keyword>[a-z0-9_]*)$"
+   regexp="y"
+   sequence="104"
+   script="show_beacon"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
    match="^lbeacon remove ?(?P<keyword>[a-z0-9_]*)$"
    regexp="y"
-   sequence="101"
+   sequence="105"
    script="remove_beacon"
   >
   </alias>
   <alias
    enabled="y"
    group="l33t"
-   match="^lrt ?(?P<keyword>[a-z0-9_]*)$"
+   match="^lbeacon list$"
    regexp="y"
-   sequence="102"
-   script="goto_beacon"
+   sequence="106"
+   script="list_beacons"
   >
   </alias>
   <!--  Plugin help  -->
@@ -215,21 +236,6 @@ end
 -- Core Functions
 
 
-function list_beacons(name, line, wildcards)
-    Note('These are the l33t beacons you have previously set:')
-    local variableNames = GetPluginVariableList(GetPluginID())
-
-    for varName, _ in orderedPairs(variableNames) do
-       local keyword = string.match(varName, 'l33t_beacon_(.*)')
-       if keyword ~= nil then
-           local roomId = getRoomIdForKeyword(keyword)
-           Note('- ' .. keyword .. ' (' .. roomId .. ')')
-       end
-    end
-
-end
-
-
 function set_beacon(name, line, wildcards)
     local keyword = GetAliasWildcard(name, 'keyword')
 
@@ -238,8 +244,31 @@ function set_beacon(name, line, wildcards)
     elseif currentRoomId == nil then
         Note("Current room is not known. Try moving around or 'look'.")
     else
-        SetVariable('l33t_beacon_' .. keyword, currentRoomId)
-        Note('Set l33t beacon named [' .. keyword .. '] to room (' .. currentRoomId .. ').')
+        local varName = getVarNameForKeyword(keyword)
+        local roomId = getRoomIdForKeyword(keyword)
+        if roomId == nil then
+            SetVariable('l33t_beacon_' .. keyword, currentRoomId)
+            Note('Set l33t beacon named [' .. keyword .. '] to room (' .. currentRoomId .. ').')
+        else
+            Note('Cannot set beacon named [' .. keyword .. '] which is already set to (' .. roomId .. '). Please remove it first.')
+        end
+    end
+end
+
+
+function show_beacon(name, line, wildcards)
+    local keyword = GetAliasWildcard(name, 'keyword')
+
+    if keyword == '' then
+        handleNoKeyword()
+    else
+        local varName = getVarNameForKeyword(keyword)
+        local roomId = getRoomIdForKeyword(keyword)
+        if roomId == nil then
+            handleNoRoomId(keyword)
+        else
+            Note('l33t beacon named [' .. keyword .. '] is set at (' .. roomId .. ').')
+        end
     end
 end
 
@@ -275,6 +304,37 @@ function goto_beacon(name, line, wildcards)
             Execute('mapper goto ' .. roomId)
         end
     end
+end
+
+
+function walkto_beacon(name, line, wildcards)
+    local keyword = GetAliasWildcard(name, 'keyword')
+
+    if keyword == '' then
+        handleNoKeyword()
+    else
+        local roomId = getRoomIdForKeyword(keyword)
+        if roomId == nil then
+            handleNoRoomId(keyword)
+        else
+            Execute('mapper walkto ' .. roomId)
+        end
+    end
+end
+
+
+function list_beacons(name, line, wildcards)
+    Note('These are the l33t beacons you have previously set:')
+    local variableNames = GetPluginVariableList(GetPluginID())
+
+    for varName, _ in orderedPairs(variableNames) do
+       local keyword = string.match(varName, 'l33t_beacon_(.*)')
+       if keyword ~= nil then
+           local roomId = getRoomIdForKeyword(keyword)
+           Note('- ' .. keyword .. ' (' .. roomId .. ')')
+       end
+    end
+
 end
 
 
