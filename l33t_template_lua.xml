@@ -106,6 +106,29 @@ end
 
 
 function OnPluginInstall()
+    printSeparator()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' .. PLUGIN_NAME
+            .. ' (v' .. PLUGIN_VERSION .. ')'
+            .. ' by ' .. PLUGIN_AUTHOR
+            .. ' ('
+        )
+    )
+    printPluginLink()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            .. 'Loaded '
+            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+            .. PLUGIN_NUM_ALIASES .. ' aliases, '
+            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'l33t XXXXX  help',
+        'CornFlowerBlue', '', '".\n'
+    )
+    printSeparator()
 end
 
 
@@ -158,36 +181,6 @@ function getDurationString(duration)
 
     return durationString
 end
-
-
-function loaded()
-    printSeparator()
-    ColourTell(
-        'CornFlowerBlue', '', (
-            'Loaded ' .. PLUGIN_NAME
-            .. ' (v' .. PLUGIN_VERSION .. ')'
-            .. ' by ' .. PLUGIN_AUTHOR
-            .. ' ('
-        )
-    )
-    printPluginLink()
-    ColourTell(
-        'CornFlowerBlue', '', (
-            ').\n'
-            .. 'Loaded '
-            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
-            .. PLUGIN_NUM_ALIASES .. ' aliases, '
-            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
-        ),
-        'CornFlowerBlue', '', 'Type "',
-        'MediumSeaGreen', '', 'l33t XXXXX  help',
-        'CornFlowerBlue', '', '".\n'
-    )
-    printSeparator()
-end
-
-
-loaded()
 
 
 ]]>
