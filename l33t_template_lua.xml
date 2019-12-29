@@ -72,6 +72,70 @@ Usage:
 <![CDATA[
 
 
+-- See: https://github.com/fiendish/aardwolfclientpackage/wiki/Using-GMCP
+require "gmcphelper" -- adds the gmcp() function for simplifying data access
+
+
+-- Globals
+
+
+PLUGIN_ID = GetPluginID()
+PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
+PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
+PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
+PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
+PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
+PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
+
+PLUGIN_URL = 'https://aard.l33t.xyz'
+
+
+-- Script Locals
+
+
+local currentRoomId = nil
+local currentRoomName = nil
+local currentZone = nil
+
+
+function handleGMCP(text)
+    --[[
+    Room Format:
+
+    {
+        ['details'] = 'safe',
+        ['name'] = 'The Grand City of Aylor',
+        ['num'] = '32418',
+        ['exits'] = {
+            ['s'] = '32419',
+            ['u'] = '35200',
+            ['d'] = '32615',
+            ['w'] = '30518',
+            ['n'] = '32539',
+            ['e'] = '32698'
+        },
+        ['terrain'] = 'aylorcity',
+        ['coord'] = {
+            ['y'] = '20',
+            ['x'] = '30',
+            ['cont'] = '0',
+            ['id'] = '0'
+        },
+        ['outside'] = '0',
+        ['zone'] = 'aylor'
+    }
+
+--]]
+
+    if text == 'room.info' then
+        local roomInfo = gmcp('room.info')
+        currentRoomId = roomInfo.num
+        currentRoomName = roomInfo.name
+        currentZone = roomInfo.zone
+    end
+end
+
+
 -- Extensions
 
 
