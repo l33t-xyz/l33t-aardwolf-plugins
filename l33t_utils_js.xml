@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_template_js"
+   author="Ruhamah"
+   id="uuid-truncated-to-24-chars"
+   language="JScript"
+   purpose="Description sentence..."
+   save_state="y"
+   date_written="2019-12-28 13:33:37"
+   requires="5.06"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_template_js (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Plugin Name description
+
+Moar description
+
+Usage:
+
+  l33t command                   - Help string
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.js"/>
+
+<!--  Triggers  -->
+
+<triggers>
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+
+</aliases>
+
+<!--  Timers  -->
+
+<timers>
+</timers>
+
+<!--  Variables  -->
+
+<variables>
+</variables>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+]]>
+</script>
+
+
+</muclient>
