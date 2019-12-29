@@ -45,6 +45,24 @@ Usage:
 <!--  Aliases  -->
 
 <aliases>
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t"
+   match="l33t_xxxxxx:help"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t xxxxxx.*$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
 </aliases>
 
 <!--  Script  -->
