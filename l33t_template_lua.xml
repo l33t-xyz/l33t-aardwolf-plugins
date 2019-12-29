@@ -102,6 +102,17 @@ function OnHelp (sName, sLine, wildcards)
 end
 
 
+-- Plugin Lifecycle
+
+
+function OnPluginInstall()
+end
+
+
+function OnPluginSaveState()
+end
+
+
 -- Util Functions
 
 

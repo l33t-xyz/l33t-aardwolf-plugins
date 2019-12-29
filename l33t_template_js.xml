@@ -24,7 +24,7 @@ Moar description
 
 Usage:
 
-  l33t command                   - Help string
+  l33t command [help]            - Displays help
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]>
@@ -45,7 +45,24 @@ Usage:
 <!--  Aliases  -->
 
 <aliases>
-
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t"
+   match="l33t_utils:help"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t utils.*$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
 </aliases>
 
 <!--  Timers  -->
@@ -63,6 +80,72 @@ Usage:
 
 <script>
 <![CDATA[
+
+
+// Help
+
+
+function OnHelp (sName, sLine, wildcards) {
+    world.Note(world.GetPluginInfo(world.GetPluginID(), 3));
+}
+
+
+// Plugin Lifecycle
+
+
+function OnPluginInInstall() {
+    loaded();
+}
+
+
+function OnPluginSaveState() {
+    // do nothing
+}
+
+
+// Util Functions
+
+
+function printSeparator() {
+    world.ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    );
+}
+
+
+function printPluginLink() {
+    world.Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1);
+}
+
+
+function loaded() {
+    printSeparator();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' + PLUGIN_NAME
+            + ' (v' + PLUGIN_VERSION + ')'
+            + ' by ' + PLUGIN_AUTHOR
+            + ' ('
+        )
+    );
+    printPluginLink();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            + 'Loaded '
+            + PLUGIN_NUM_TRIGGERS + ' triggers, '
+            + PLUGIN_NUM_ALIASES + ' aliases, '
+            + PLUGIN_NUM_TIMERS + ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'l33t XXXXXXXXX help',
+        'CornFlowerBlue', '', '".\n'
+    );
+    printSeparator();
+}
+
 
 ]]>
 </script>
