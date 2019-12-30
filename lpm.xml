@@ -9,7 +9,7 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
-    <name>l33t beacons</name>
+    <name>l33t Beacons</name>
     <author>Ruhamah</author>
     <description>Saves rooms to keywords to enable fast recall using those keywords.</description>
     <id>50bfe7617d60469685e1470c</id>
@@ -25,7 +25,7 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
-    <name>l33t stopwatch</name>
+    <name>l33t Stopwatch</name>
     <author>Ruhamah</author>
     <description>Tracks your leveling up or power up speed.</description>
     <id>f511200e0ba60e7ecbb9d220</id>
@@ -35,7 +35,7 @@
   <plugin>
     <name>l33t Lua utils</name>
     <author>Ruhamah</author>
-    <description>l33t Lua utils.</description>
+    <description>l33t Lua utils. A dependency of other l33t plugins. Handles GMCP and broadcasts metadata.</description>
     <id>fc6f6f198e8f442baa0be9a6</id>
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_utils_lua-latest.zip</download>
     <installpath>0</installpath>

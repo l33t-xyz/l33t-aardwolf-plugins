@@ -12,5 +12,7 @@
 
 - **l33t Aarchaeology Reporter** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_aarch_reporter.xml)) - Tracks and reports collected and missing Aarchaeology items.
 - **l33t Beacons** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_beacons.xml)) - Saves rooms to keywords to enable fast recall using those keywords.
+- **l33t Doorman** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_doorman.xml)) - l33t Doorman opens doors for you!
 - **l33t Stopwatch** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_stopwatch.xml)) - Tracks your leveling up or power up speed.
+- **l33t Lua utils** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_utils_lua.xml)) - l33t Lua utils. A dependency of other l33t plugins. Handles GMCP and broadcasts metadata.
 - **l33t Utils (JScript)** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_utils_js.xml)) - Various l33t convenience utilities.
