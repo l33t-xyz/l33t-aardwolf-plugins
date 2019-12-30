@@ -33,17 +33,17 @@ Usage:
   lbeacon set <keyword>          - Saves current room to keyword
   lbeacon goto <keyword>         - Run to previously set l33t beacon
                                    using 'mapper goto roomid'
-                                   (Recommended client-alias: lrt)
+                                   (Recommended client alias: lrt)
   lbeacon walkto <keyword>       - Walk to previously set l33t beacon
                                    using 'mapper walkto roomid'
-                                   (Recommended client-alias: lwt)
+                                   (Recommended client alias: lwt)
   lbeacon show <keyword>         - Shows the roomid for a keyword
   lbeacon remove <keyword>       - Remove a previously saved beacon
 
   lbeacon waypoint               - Sets a special waypoint-type beacon
-                                   (Recommended client-alias: lbw)
+                                   (Recommended client alias: lbw)
   lbeacon return                 - Returns to previously set waypoint
-                                   (Recommended client-alias: lbrt)
+                                   (Recommended client alias: lbr)
 
   lbeacon list                   - List all saved l33t beacons
 
