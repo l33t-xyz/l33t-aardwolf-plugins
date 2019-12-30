@@ -93,9 +93,7 @@ PLUGIN_URL = 'https://aard.l33t.xyz'
 -- Script Locals
 
 
-local currentRoomId = nil
-local currentRoomName = nil
-local currentZone = nil
+local currentRoomInfo = nil
 
 
 function handleGMCP(text)
@@ -129,9 +127,9 @@ function handleGMCP(text)
 
     if text == 'room.info' then
         local roomInfo = gmcp('room.info')
-        currentRoomId = roomInfo.num
-        currentRoomName = roomInfo.name
-        currentZone = roomInfo.zone
+        if roomInfo ~= nil then
+            currentRoomInfo = roomInfo
+        end
     end
 end
 
