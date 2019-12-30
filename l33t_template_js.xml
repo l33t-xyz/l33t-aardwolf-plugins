@@ -95,6 +95,10 @@ var PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11);
 
 var PLUGIN_URL = 'https://aard.l33t.xyz';
 
+// Other plugins
+var PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264';
+var PLUGIN_ID_L33T_LUA_UTILS = 'fc6f6f198e8f442baa0be9a6';
+
 
 // Script Locals
 
@@ -146,7 +150,13 @@ function OnPluginSaveState() {
 
 
 function OnPluginBroadcast(msg, id, name, text) {
-    // do nothing
+    if (id == PLUGIN_ID_GMCP_HANDLER) {
+        //handleGMCP(text)
+    } else if (id == PLUGIN_ID_L33T_LUA_UTILS) {
+        // placeholder
+    } else {
+        // do nothing, unrecognized plugin
+    }
 }
 
 
