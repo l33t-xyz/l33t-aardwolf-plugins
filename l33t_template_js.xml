@@ -82,6 +82,26 @@ Usage:
 <![CDATA[
 
 
+// Globals
+
+
+var PLUGIN_ID = GetPluginID();
+var PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1);
+var PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2);
+var PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19);
+var PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9);
+var PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10);
+var PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11);
+
+var PLUGIN_URL = 'https://aard.l33t.xyz';
+
+
+// Script Locals
+
+
+// Core Functions
+
+
 // Help
 
 
@@ -121,6 +141,11 @@ function OnPluginInstall() {
 
 
 function OnPluginSaveState() {
+    // do nothing
+}
+
+
+function OnPluginBroadcast(msg, id, name, text) {
     // do nothing
 }
 
