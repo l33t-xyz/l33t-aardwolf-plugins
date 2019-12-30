@@ -17,11 +17,27 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
+    <name>l33t Doorman</name>
+    <author>Ruhamah</author>
+    <description>l33t Doorman opens doors for you!</description>
+    <id>cbc0a4223f5a4399a061ebcd</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_doorman-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+  <plugin>
     <name>l33t stopwatch</name>
     <author>Ruhamah</author>
     <description>Tracks your leveling up or power up speed.</description>
     <id>f511200e0ba60e7ecbb9d220</id>
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_stopwatch-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+  <plugin>
+    <name>l33t Lua utils</name>
+    <author>Ruhamah</author>
+    <description>l33t Lua utils.</description>
+    <id>fc6f6f198e8f442baa0be9a6</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_utils_lua-latest.zip</download>
     <installpath>0</installpath>
   </plugin>
   <plugin>

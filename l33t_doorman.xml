@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_doorman"
+   author="Ruhamah"
+   id="cbc0a4223f5a4399a061ebcd"
+   language="JScript"
+   purpose="l33t Doorman opens doors for you!"
+   save_state="y"
+   date_written="2019-12-28 13:33:37"
+   requires="5.06"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_doorman (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Doorman automagically opens closed doors for you.
+
+Usage:
+
+  l33t doorman [help]            - Displays help
+  doorman [help]                 - Displays help
+
+  doorman on                     - Turns l33t Doorman on
+  doorman off                    - Turns l33t Doorman off
+
+  doorman dismiss                - Tells Doorman to not automagically
+                                   open doors for current room
+  doorman summon                 - Tells Doorman to automagically open
+                                   doors for current room once again
+
+  doorman list                   - List rooms from which l33t Doorman
+                                   is dismissed
+
+Note:
+
+Requires l33t Lua utils (l33t_utils_lua) to support 'doorman dismiss'
+and 'doorman summon'.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.js"/>
+
+<!--  Triggers  -->
+
+<triggers>
+  <trigger
+   enabled="y"
+   group="l33t_doorman"
+   keep_evaluating="y"
+   match="^\[ Exits: (?:.*?)\(((?:north)|(?:south)|(?:east)|(?:west)|(?:down)|(?:up))\)(?:.*?) \]$"
+   name="l33t_doorman_auto_door_opener"
+   regexp="y"
+   sequence="20"
+   script="doorman_main"
+  >
+  </trigger>
+  <trigger
+   enabled="y"
+   group="l33t_doorman"
+   match="You see a * above you."
+   sequence="31"
+  >
+  <send>open up</send>
+  </trigger>
+  <trigger
+   enabled="y"
+   group="l33t_doorman"
+   match="You see a * below you."
+   sequence="32"
+  >
+  <send>open d</send>
+  </trigger>
+  <trigger
+   enabled="y"
+   group="l33t_doorman"
+   match="You see a * to the *."
+   sequence="33"
+  >
+  <send>open %2</send>
+  </trigger>
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   enabled="y"
+   group="l33t_doorman"
+   match="^doorman on(?P<silent> silent)?$"
+   name="doorman_on"
+   regexp="y"
+   script="doormanOn"
+   sequence="101"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_doorman"
+   match="^doorman off(?P<silent> silent)?$"
+   name="doorman_off"
+   regexp="y"
+   script="doormanOff"
+   sequence="102"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_doorman"
+   match="^doorman dismiss$"
+   regexp="y"
+   script="dismissDoorman"
+   sequence="103"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_doorman"
+   match="^doorman summon$"
+   regexp="y"
+   script="summonDoorman"
+   sequence="104"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_doorman"
+   match="^doorman list$"
+   regexp="y"
+   script="doormanListDismissedRooms"
+   sequence="104"
+  >
+  </alias>
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t"
+   match="l33t_doorman:help"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^doorman.*$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+</aliases>
+
+<!--  Timers  -->
+
+<timers>
+</timers>
+
+<!--  Variables  -->
+
+<variables>
+</variables>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+// Globals
+
+
+var PLUGIN_ID = GetPluginID();
+var PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1);
+var PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2);
+var PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19);
+var PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9);
+var PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10);
+var PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11);
+
+var PLUGIN_URL = 'https://aard.l33t.xyz';
+
+// Other plugins
+var PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264';
+var PLUGIN_ID_L33T_LUA_UTILS = 'fc6f6f198e8f442baa0be9a6';
+
+
+// Script Locals
+
+var DOORMAN_DISMISSED_PREFIX = 'dismissed_room_';
+
+
+var currentRoomId = null;
+var currentRoomName = null;
+var currentZone = null;
+
+var doormanEnabled = false;
+
+
+function handleGMCP(text) {
+}
+
+
+function handleL33tLuaUtilsUpdate(text) {
+    if (text === 'room.updated') {
+        currentRoomId = GetPluginVariable(PLUGIN_ID_L33T_LUA_UTILS, 'currentRoomId');
+        currentRoomName = GetPluginVariable(PLUGIN_ID_L33T_LUA_UTILS, 'currentRoomName');
+        currentZone = GetPluginVariable(PLUGIN_ID_L33T_LUA_UTILS, 'currentZone');
+        //world.Note('Room updated - [' + currentRoomName + '] (' + currentRoomId + ') [' + currentZone + ']');
+    }
+}
+
+
+// Core Functions
+
+
+function doorman_main(name, line, wildcards) {
+    if (currentRoomHasDoormanDismissed()) {
+        world.Note("l33t Doorman is currently dismissed for the current room. To resummon l33t Doorman to this room, type 'doorman summon'.");
+    } else if (doormanEnabled) {
+        var input = world.GetTriggerWildcard(name, '0');
+        var parts = input.split(' ');
+
+        var doorDirections = [
+            'north',
+            'south',
+            'east',
+            'west',
+            'down',
+            'up'
+        ];
+
+        for (var i=0; i < parts.length; ++i) {
+            var part = parts[i];
+            for (var j=0; j < doorDirections.length; ++j) {
+                var direction = doorDirections[j];
+                var closedDoor = '(' + direction + ')';
+                if (part === closedDoor){
+                    world.Note('l33t Doorman opens ' + direction + '.');
+                    world.Execute('open ' + direction);
+                }
+            }    
+        }
+    } else {
+        // do nothing -- doorman is disabled or dismissed
+    }
+}
+
+
+function doormanOn(name, line, wildcards) {
+    doormanEnabled = true;
+
+    var silent = world.GetAliasWildcard(name, 'silent');
+    if (!silent) {
+        world.Note('l33t Doorman enabled.');
+    }
+}
+
+
+function doormanOff(name, line, wildcards) {
+    doormanEnabled = false;
+
+    var silent = world.GetAliasWildcard(name, 'silent');
+    if (!silent) {
+        world.Note('l33t Doorman disabled.');
+    }
+}
+
+
+function getDismissedRoomVarName() {
+    var varName = DOORMAN_DISMISSED_PREFIX + currentRoomId;
+    return varName;
+}
+
+
+function dismissDoorman() {
+    if (currentRoomId === null) {
+        world.Note("Current room is not known. Try moving around or 'look'.");
+    } else {
+        world.SetVariable(getDismissedRoomVarName(), '[' + currentZone + '][' + currentRoomName + ']');
+        world.Note('You inform l33t Doorman its services are not needed at [' + currentRoomName + '] (' + currentRoomId + ').');
+    }
+}
+
+
+function summonDoorman() {
+    if (currentRoomId === null) {
+        world.Note("Current room is not known. Try moving around or 'look'.");
+    } else if (currentRoomHasDoormanDismissed()) {
+        world.DeleteVariable(getDismissedRoomVarName());
+        world.Note('l33t Doorman at your service at [' + currentRoomName + '] (' + currentRoomId + ')!');
+    } else {
+        world.Note('l33t Doorman is already here at [' + currentRoomName + '] (' + currentRoomId + ')!');
+    }
+}
+
+
+function doormanListDismissedRooms() {
+    Note('These are the rooms which l33t Doorman has been dismissed from:');
+
+    var varNames = new VBArray(world.GetPluginVariableList(world.GetPluginID())).toArray();
+    for (var i=0; i < varNames.length; ++i) {
+        var varName = varNames[i];
+
+        if (varName.substring(0, DOORMAN_DISMISSED_PREFIX.length) === DOORMAN_DISMISSED_PREFIX)  {
+            var roomName = world.GetVariable(varName);
+            var roomId = varName.replace(DOORMAN_DISMISSED_PREFIX, '');
+            world.Note('- ' + roomName + ' (' + roomId + ')');
+        } else {
+            // variables that don't apply
+            //world.Note(varName);
+        }
+    }
+}
+
+
+function currentRoomHasDoormanDismissed() {
+    var stored = world.GetVariable(getDismissedRoomVarName());
+    var isDismissed = stored !== undefined && stored !== null && stored !== '';
+
+    return isDismissed;
+}
+
+
+// Help
+
+
+function OnHelp (sName, sLine, wildcards) {
+    world.Note(world.GetPluginInfo(world.GetPluginID(), 3));
+}
+
+
+// Plugin Lifecycle
+
+
+function OnPluginInstall() {
+    printSeparator();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' + PLUGIN_NAME
+            + ' (v' + PLUGIN_VERSION + ')'
+            + ' by ' + PLUGIN_AUTHOR
+            + ' ('
+        )
+    );
+    printPluginLink();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            + 'Loaded '
+            + PLUGIN_NUM_TRIGGERS + ' triggers, '
+            + PLUGIN_NUM_ALIASES + ' aliases, '
+            + PLUGIN_NUM_TIMERS + ' timers.\n\n'
+        )
+    );
+    world.ColourTell('CornFlowerBlue', '', 'Type "');
+    world.ColourTell('MediumSeaGreen', '', 'doorman help');
+    world.ColourTell('CornFlowerBlue', '', '".\n');
+    printSeparator();
+
+    if (GetVariable('doorman_enabled') === 'true') {
+        doormanOn();
+    } else {
+        doormanOff();
+    }
+}
+
+
+function OnPluginSaveState() {
+    if (doormanEnabled) {
+        world.SetVariable('doorman_enabled', 'true');
+    } else {
+        world.SetVariable('doorman_enabled', 'false');
+    }
+}
+
+
+function OnPluginBroadcast(msg, id, name, text) {
+    if (id === PLUGIN_ID_GMCP_HANDLER) {
+        handleGMCP(text);
+    } else if (id === PLUGIN_ID_L33T_LUA_UTILS) {
+        handleL33tLuaUtilsUpdate(text);
+    } else {
+        // do nothing, unrecognized plugin
+    }
+}
+
+
+// Util Functions
+
+
+function printSeparator() {
+    world.ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    );
+}
+
+
+function printPluginLink() {
+    world.Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1);
+}
+
+
+]]>
+</script>
+
+
+</muclient>

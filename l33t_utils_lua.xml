@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_utils_lua"
+   author="Ruhamah"
+   id="fc6f6f198e8f442baa0be9a6"
+   language="Lua"
+   purpose="l33t Lua utils"
+   save_state="y"
+   date_written="2019-12-29 01:33:37"
+   requires="5.06"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_utils_lua (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Lua Utils provides advance functionality for other
+l33t plugins, as Lua-to-Lua calls are more powerful.
+
+Usage:
+
+  l33t utils [help]              - Displays help
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t"
+   match="l33t_utils_lua:help"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l33t luautils.*$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+</aliases>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+-- See: https://github.com/fiendish/aardwolfclientpackage/wiki/Using-GMCP
+require "gmcphelper" -- adds the gmcp() function for simplifying data access
+
+
+-- Globals
+
+
+PLUGIN_ID = GetPluginID()
+PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
+PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
+PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
+PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
+PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
+PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
+
+PLUGIN_URL = 'https://aard.l33t.xyz'
+
+-- Other plugins
+PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264';
+
+
+-- Script Locals
+
+
+local currentRoomInfo = nil
+
+
+function handleGMCP(text)
+    --[[
+    Room Format:
+
+    {
+        ['details'] = 'safe',
+        ['name'] = 'The Grand City of Aylor',
+        ['num'] = '32418',
+        ['exits'] = {
+            ['s'] = '32419',
+            ['u'] = '35200',
+            ['d'] = '32615',
+            ['w'] = '30518',
+            ['n'] = '32539',
+            ['e'] = '32698'
+        },
+        ['terrain'] = 'aylorcity',
+        ['coord'] = {
+            ['y'] = '20',
+            ['x'] = '30',
+            ['cont'] = '0',
+            ['id'] = '0'
+        },
+        ['outside'] = '0',
+        ['zone'] = 'aylor'
+    }
+
+--]]
+
+    if text == 'room.info' then
+        local roomInfo = gmcp('room.info')
+        if roomInfo ~= nil then
+            updateCurrentRoom(roomInfo)
+        end
+    end
+end
+
+
+-- Extensions
+
+
+table.reduce = function (list, fn) 
+    local acc
+    for k, v in ipairs(list) do
+        if 1 == k then
+            acc = v
+        else
+            acc = fn(acc, v)
+        end 
+    end 
+    return acc 
+end
+
+
+function sum(a, b)
+    return a + b
+end
+
+
+-- Core Functions
+
+
+function getCurrentRoomInfo()
+    return currentRoomInfo
+end
+
+
+function updateCurrentRoom(roomInfo)
+    currentRoomInfo = roomInfo
+
+    SetVariable('currentRoomId', roomInfo.num)
+    SetVariable('currentRoomName', roomInfo.name)
+    SetVariable('currentZone', roomInfo.zone)
+
+    BroadcastPlugin(1337, 'room.updated')
+end
+
+
+
+-- Help
+
+
+function OnHelp (sName, sLine, wildcards)
+    Note(GetPluginInfo(GetPluginID(), 3))
+end
+
+
+-- Plugin Lifecycle
+
+
+function OnPluginInstall()
+    printSeparator()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' .. PLUGIN_NAME
+            .. ' (v' .. PLUGIN_VERSION .. ')'
+            .. ' by ' .. PLUGIN_AUTHOR
+            .. ' ('
+        )
+    )
+    printPluginLink()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            .. 'Loaded '
+            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+            .. PLUGIN_NUM_ALIASES .. ' aliases, '
+            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'l33t luautils help',
+        'CornFlowerBlue', '', '".\n'
+    )
+    printSeparator()
+end
+
+
+function OnPluginSaveState()
+end
+
+
+function OnPluginBroadcast(msg, id, name, text)
+    if id == PLUGIN_ID_GMCP_HANDLER then -- message from the GMCP Handler
+        handleGMCP(text)
+    elseif id == PLUGIN_ID_L33T_LUA_UTILS then
+        -- do nothing, ourselves
+    else
+        -- do nothing, unrecognized plugin
+    end
+end
+
+
+-- Util Functions
+
+
+function printSeparator()
+    ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
+end
+
+
+function printPluginLink()
+    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+end
+
+
+function getDurationString(duration)
+    local seconds = duration
+    local hours = math.floor(seconds / 3600)
+    seconds = seconds - (hours * 3600)
+    local minutes = math.floor(seconds / 60)
+    seconds = seconds - (minutes * 60)
+
+    local durationString = ''
+    if hours > 0 then
+        durationString = durationString .. hours .. ' hours'
+    end
+
+    if minutes > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. minutes .. ' minutes'
+    end
+
+    if seconds > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. seconds .. ' seconds'
+    end
+
+    return durationString
+end
+
+
+]]>
+</script>
+
+
+</muclient>
