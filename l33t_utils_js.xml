@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2019-12-28 13:33:37"
    requires="5.06"
-   version="0.01"
+   version="0.02"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_utils_js (v0.01) by Ruhamah (https://aard.l33t.xyz)
+l33t_utils_js (v0.02) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Utils is a bunch of convenience utilities and aliases.
 
@@ -84,7 +84,7 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="l33t_utils:help"
+   match="l33t_utils_js:help"
    script="OnHelp"
    sequence="999"
   >
