@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <pluginsListing>
   <plugin>
-    <name>l33t aarch reporter</name>
+    <name>l33t Aarchaeology Reporter</name>
     <author>Ruhamah</author>
     <description>Report which Aarchaeology item numbers you are missing.</description>
     <id>46a8a53a355f869f61b200ee</id>
@@ -33,7 +33,7 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
-    <name>l33t Lua utils</name>
+    <name>l33t Lua Utils</name>
     <author>Ruhamah</author>
     <description>l33t Lua utils. A dependency of other l33t plugins. Handles GMCP and broadcasts metadata.</description>
     <id>fc6f6f198e8f442baa0be9a6</id>
@@ -41,7 +41,7 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
-    <name>l33t utils (JScript)</name>
+    <name>l33t Utils (JScript)</name>
     <author>Ruhamah</author>
     <description>Various l33t convenience utilities.</description>
     <id>a589fcd28fab4b2b93c9ace2</id>
