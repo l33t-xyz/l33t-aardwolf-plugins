@@ -156,22 +156,6 @@ function sum(a, b)
     return a + b
 end
 
--- Globals
-
-
-PLUGIN_ID = GetPluginID()
-PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
-PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
-PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
-PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
-PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
-PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
-
-PLUGIN_URL = 'https://aard.l33t.xyz'
-
-
--- Script Locals
-
 
 -- Core Functions
 
