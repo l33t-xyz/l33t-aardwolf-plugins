@@ -29,6 +29,10 @@ report instinct <chan>     --> Reports instinct. If <chan> is omitted
                              > 51.
 report mastery  <chan>     --> Reports mastery. If <chan> is omitted reports
                              >  to the room.
+report threshold           --> Displays the current report threshold.
+report threshold <number>  --> Sets reporting threshold to <number>.
+                             > Hides any instinct/mastery below this amount.
+
 ----------------------------------------------------------------------------
 ]]>
 </description>
@@ -204,6 +208,35 @@ report mastery  <chan>     --> Reports mastery. If <chan> is omitted reports
 		end
   </send>
 </alias>
+
+<alias
+   match="^report threshold (\d+)$"
+   regexp = "y"
+   enabled="y"
+   echo_alias="y"
+   send_to="12"
+   sequence="95">
+  <send>
+		SetVariable("report_threshold", "%1")
+		Note("report threshold set to [%1]")
+
+  </send>
+</alias>
+
+<alias
+   match="^report threshold$"
+   regexp = "y"
+   enabled="y"
+   echo_alias="y"
+   send_to="12"
+   sequence="96">
+  <send>
+		local report_threshold = GetVariable("report_threshold") or ""
+		Note("report threshold currently set to [" .. report_threshold .. "]")
+
+  </send>
+</alias>
+
 </aliases>
 <!--  Script  -->
 
@@ -244,8 +277,12 @@ function Process_Instinct_Line(_, line, _, _)
 		end
 		instinct_amount = tonumber(trim(string.sub(line, 42, (42+8))))
 
+		local report_threshold = tonumber(GetVariable("report_threshold") or "0")
 		if (instinct_amount == nil) then
 			--This will capture prompts so just ignore them.
+			return
+        elseif (instinct_amount <= report_threshold) then
+			--This will hide points of instinct below threshold.
 			return
 		end
 
@@ -351,8 +388,12 @@ function Process_Mastery_Line(_, line, _, _)
 
 		local mastery_amount = tonumber(trim(string.sub(line, 14, (14+7))))
 
+		local report_threshold = tonumber(GetVariable("report_threshold") or "0")
 		if (mastery_amount == nil) then
 			--This will capture prompts - which won't have a mastery amount - so just ignore them.
+			return
+        elseif (mastery_amount <= report_threshold) then
+			--This will hide points of mastery below threshold.
 			return
 		end
 
