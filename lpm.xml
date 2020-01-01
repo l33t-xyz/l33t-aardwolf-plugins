@@ -55,7 +55,7 @@
     <description>Allows use of a fake tracker channel, along with history.</description>
     <id>9a386e25e87cd9ed2311c961</id>
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/vendor/Aardwolf_Fake_Tracker_Channel-latest.zip</download>
-    <installpath>0</installpath>
+    <installpath>vendor</installpath>
   </plugin>
   <plugin>
     <name>Mendaloth's Aardwolf Instinct/Mastery Reporter</name>
@@ -63,7 +63,7 @@
     <description>Reports your instinct and mastery to room or a channel.</description>
     <id>9a386e25e87cd9ed2311c961</id>
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/vendor/Aardwolf_Instinct_Mastery_Reporter-latest.zip</download>
-    <installpath>0</installpath>
+    <installpath>vendor</installpath>
   </plugin>
 
 </pluginsListing>
