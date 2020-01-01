@@ -187,7 +187,7 @@ end
 
 function lpm_help(name, line, wc)
     print('')
-    NoteStyle(2)			        
+    NoteStyle(2)
     ColourNote('MediumSeaGreen', '', 'l33t.xyz Plugin Manager')
     NoteStyle(0)
     print('')
@@ -331,9 +331,14 @@ function async_plugin_download_complete(retval, page, status, headers, full_stat
     local xmlFiles = {}
     local xmlFile = {}
     if updatePlugin.installpath == '1' then
+        -- installs to MUSHclient directory
         folder = GetInfo(66)
-    else
+    elseif updatePlugin.installpath == '0' then
+        -- installs to directory where l33t_plugin_manager.xml is installed
         folder = GetPluginInfo(GetPluginID(), 20)
+    else
+        -- installs to subdirectory under where l33t_plugin_manager.xml is installed
+        folder = GetPluginInfo(GetPluginID(), 20) .. updatePlugin.installpath
     end
     --print('FOLDER IS ' .. folder)
     if status == 200 then -- download successful
@@ -373,7 +378,7 @@ function async_plugin_download_complete(retval, page, status, headers, full_stat
 
         for i = 1, #updatePlugin.ids do
             --if not IsPluginInstalled(thisPlugin.ids[i]) then
-                --LoadPlugin(folder ..  
+                --LoadPlugin(folder ..
             --end
             --(IsPluginInstalled(thisPlugin.ids[i]) and GetPluginInfo(thisPlugin.ids[i], 17)) then
             --ReloadPlugin(updatePlugin.ids[i])
@@ -505,10 +510,10 @@ function OnPluginInstall()
     local installedStr = GetVariable('installedPlugins')
     local lastListStr = GetVariable('lastPluginList')
     if installedStr ~= nil then
-        installedPlugins = load( 'return ' .. installedStr)() 
+        installedPlugins = load( 'return ' .. installedStr)()
     end
     if lastListStr ~= nil then
-        lastPluginList = load( 'return ' .. lastListStr)() 
+        lastPluginList = load( 'return ' .. lastListStr)()
     end
     lastListHash = GetVariable('lastListHash')
 
@@ -588,5 +593,5 @@ end
 
 
 ]]>
-</script> 
+</script>
 </muclient>
