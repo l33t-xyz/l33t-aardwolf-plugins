@@ -72,7 +72,7 @@
     <id>56e7e7121bf320c3510ee2e0</id>
     <description>Lets you add friends/clan members to a list to auto-invite them to party when they login. Also lets group members use commands via tell/group messages to invite themselves or others.</description>
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/vendor/inviter-latest.zip</download>
-    <installpath>0</installpath>
+    <installpath>vendor/</installpath>
   </plugin>
 
 </pluginsListing>
