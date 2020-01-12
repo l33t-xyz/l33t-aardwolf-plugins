@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2020-01-11 13:33:37"
    requires="5.06"
-   version="0.03"
+   version="0.04"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_enchanter (v0.03) by Ruhamah (https://aard.l33t.xyz)
+l33t_enchanter (v0.04) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Enchanter casts enchants on items in your containers.
 
@@ -74,6 +74,18 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   >
   </trigger>
 
+  <trigger
+   enabled="n"
+   group="l33t"
+   match="^ *(?<itemLevel>\d+) (?P<itemShortName>.*) * \((?P<itemId>\d+)\) (?P<itemType>[a-z]+) *.*$"
+   name="l33t_enchant_dinv_search_item"
+   omit_from_output="y"
+   regexp="y"
+   script="l33t_enchant_dinv_search_item"
+   sequence="100"
+  >
+  </trigger>
+
 </triggers>
 
 <!--  Aliases  -->
@@ -82,7 +94,7 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   <alias
    enabled="y"
    group="l33t"
-   match="^lenchant (?P<enchantType>(conceal)|(illuminate)|(resonate)|(solidify)) *(?P<containerId>\d*)$"
+   match="^lenchant (?P<enchantType>(illuminate)|(resonate)|(solidify)) *(?P<containerId>\d*)$"
    regexp="y"
    sequence="100"
    script="l33t_enchant"
@@ -92,7 +104,17 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   <alias
    enabled="y"
    group="l33t"
-   match="^lenchant (?P<enchantType>(conceal)|(illuminate)|(resonate)|(solidify)) *(?P<containerId>inventory)$"
+   match="^lenchant (?P<enchantType>(illuminate)|(resonate)|(solidify)) *(?P<containerId>inventory)$"
+   regexp="y"
+   sequence="100"
+   script="l33t_enchant"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lenchant (?P<enchantType>conceal) *(?P<containerId>.+)$"
    regexp="y"
    sequence="100"
    script="l33t_enchant"
@@ -113,7 +135,17 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   <alias
    enabled="y"
    group="l33t"
-   match="^l(?:(enchant)|(conceal)|(illuminate)|(resonate)|(solidify)) *(?:help)? *$"
+   match="^lenchant *(?:help)? *$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lenchant.*$"
    regexp="y"
    sequence="999"
    script="OnHelp"
@@ -234,19 +266,32 @@ function l33t_enchant(name, line, wildcards)
     currentContainerId = containerId
 
     if enchantType == 'conceal' then
+        -- conceal
+        local dinvCommand = 'dinv search objid ~flag nolocate rlocation ' .. containerId
+        --_addDinvSearchStartTrigger()
+        --_addDinvSearchEndTrigger()
         Note("l33t Enchanter does not support 'conceal' yet. Coming soon!")
-        return
-    end
-
-    _addInvdataStartTrigger(containerId)
-    _addInvdataEndTrigger(containerId)
-
-    if currentContainerId == 'inventory' then
-        SendNoEcho('invdata')
+        Note('')
+        Note("Run the 'dinv search' command to find items needing to be concealed:")
+        Note("    '" .. dinvCommand .. "'")
+        Note('')
+        --Execute(dinvCommand)
     else
-        SendNoEcho('invdata ' .. containerId)
+        -- illuminate, resonate, solidify
+
+        _addInvdataStartTrigger(containerId)
+        _addInvdataEndTrigger(containerId)
+
+        if currentContainerId == 'inventory' then
+            SendNoEcho('invdata')
+        else
+            SendNoEcho('invdata ' .. containerId)
+        end
     end
 end
+
+
+-- Invdata-based enchanting
 
 
 function _addInvdataStartTrigger(containerId)
@@ -379,6 +424,83 @@ function enchantOneItem(itemId)
     if currentContainerId ~= 'inventory' then
         SendNoEcho('put ' .. itemId .. ' ' .. currentContainerId)
     end
+end
+
+
+-- Dinv-based enchanting
+
+
+function _addDinvSearchStartTrigger(containerId)
+    local triggerName = 'l33t_enchant_dinv_search_start'
+    --local matchText = '^Lvl Name of (?P<itemGroup>(Armor)|(Food)|(Pill)|(Potion)|(Trash)|(Treasure)|(Portal)|(Armor)|(Weapon)) .*$'
+    local matchText = '^Lvl.*$'
+    local responseText = ''
+    local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
+    local color = custom_colour.NoChange
+    local wildcard = 0
+    local soundFileName = ''
+    local scriptName = 'startCapturingDinvSearchOutput';
+
+    world.AddTrigger(
+        triggerName,
+        matchText,
+        responseText,
+        flags,
+        color,
+        wildcard,
+        soundFileName,
+        scriptName
+    )
+end
+
+
+function _addDinvSearchEndTrigger(containerId)
+    local triggerName = 'l33t_enchant_dinv_search_end'
+    local matchText = '^{/dinv search .*}$'
+    local responseText = ''
+    local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
+    local color = custom_colour.NoChange
+    local wildcard = 0
+    local soundFileName = ''
+    local scriptName = 'stopCapturingDinvSearchOutput'
+    AddTrigger(
+        triggerName,
+        matchText,
+        responseText,
+        flags,
+        color,
+        wildcard,
+        soundFileName,
+        scriptName
+    )
+end
+
+
+function startCapturingDinvSearchOutput(name, line, wildcards)
+    EnableTrigger('l33t_enchant_dinv_search_item', 1)
+
+    nonGlowingItems = {}
+    nonHummingItems = {}
+    invisibleItems = {}
+    nonConcealedItems = {}
+end
+
+
+function stopCapturingDinvSearchOutput(name, line, wildcards)
+    EnableTrigger('l33t_enchant_dinv_search_item', 0)
+    --doBatchEnchants()
+end
+
+
+function l33t_enchant_dinv_search_item(name, line, wildcards)
+    local itemLevel = tonumber(GetTriggerWildcard(name, 'itemLevel'))
+    local itemShortName = GetTriggerWildcard(name, 'itemShortName')
+    local itemId = tonumber(GetTriggerWildcard(name, 'itemId'))
+    local itemType = GetTriggerWildcard(name, 'itemType')
+
+    Note('non-concealed item: ' .. itemShortName)
+
+    table.insert(nonConcealedItems, itemId)
 end
 
 
