@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2020-01-11 13:33:37"
    requires="5.06"
-   version="0.01"
+   version="0.02"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_enchanter (v0.01) by Ruhamah (https://aard.l33t.xyz)
+l33t_enchanter (v0.02) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Enchanter casts enchants on items in your containers.
 
@@ -328,7 +328,7 @@ function doBatchEnchants()
     local count = 0
 
     for index, itemId in ipairs(collection) do
-        if count > ENCHANT_LIMIT then
+        if count >= ENCHANT_LIMIT then
             -- enchants up to a certain limit per invocation
             -- so as to not issue too many commands to the game
             break
