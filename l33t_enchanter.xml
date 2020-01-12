@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2020-01-11 13:33:37"
    requires="5.06"
-   version="0.02"
+   version="0.03"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_enchanter (v0.02) by Ruhamah (https://aard.l33t.xyz)
+l33t_enchanter (v0.03) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Enchanter casts enchants on items in your containers.
 
@@ -31,16 +31,21 @@ Usage:
   l33t enchanter [help]          - Displays help
   lenchant [help]
 
-  lconceal <containerId>         - NOT SUPPORTED YET
-  lilluminate <containerId>      - Casts 'illuminate' on any eligible
-                                   items in container.
-  lresonate <containerId>        - Casts 'resonate' on any eligible
-                                   items in container.
-  lsolidify <containerId>        - Casts 'solidify' on any eligible
-                                   items in container.
+  lenchant <enchantType> <containerId>
+
+  - Casts enchantment on any eligible items in container,
+    where <enchantType> is one of: 'illuminate', 'resonate', or 'solidify'.
+
+  lenchant <enchantType> inventory
+
+  - Casts enchantment on any eligible items in inventory.
+    Be careful that this is what you actually want; this is why
+    'inventory' must be fully spelled out.
 
 NOTE:
 In order to not spam the server, the limit is 10 items enchanted per run.
+
+The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]>
@@ -77,7 +82,17 @@ In order to not spam the server, the limit is 10 items enchanted per run.
   <alias
    enabled="y"
    group="l33t"
-   match="^l(?P<enchantType>(illuminate)|(resonate)|(solidify)) (?P<containerId>\d*)$"
+   match="^lenchant (?P<enchantType>(conceal)|(illuminate)|(resonate)|(solidify)) *(?P<containerId>\d*)$"
+   regexp="y"
+   sequence="100"
+   script="l33t_enchant"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^lenchant (?P<enchantType>(conceal)|(illuminate)|(resonate)|(solidify)) *(?P<containerId>inventory)$"
    regexp="y"
    sequence="100"
    script="l33t_enchant"
@@ -218,16 +233,25 @@ function l33t_enchant(name, line, wildcards)
     currentEnchantType = enchantType
     currentContainerId = containerId
 
+    if enchantType == 'conceal' then
+        Note("l33t Enchanter does not support 'conceal' yet. Coming soon!")
+        return
+    end
+
     _addInvdataStartTrigger(containerId)
     _addInvdataEndTrigger(containerId)
 
-    SendNoEcho('invdata ' .. containerId)
+    if currentContainerId == 'inventory' then
+        SendNoEcho('invdata')
+    else
+        SendNoEcho('invdata ' .. containerId)
+    end
 end
 
 
 function _addInvdataStartTrigger(containerId)
     local triggerName = 'l33t_enchant_invdata_start'
-    local matchText = '^{invdata ' .. containerId .. '}$'
+    local matchText = '^{invdata' .. ((containerId == 'inventory' and '') or (' ' .. containerId)) .. '}$'
     local responseText = ''
     local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
     local color = custom_colour.NoChange
@@ -340,17 +364,21 @@ function doBatchEnchants()
     end
 
     if count > 0 then
-        Note('l33t Enchanter batch enchanting ' .. count .. ' items with ' .. currentEnchantType .. '...')
+        Note('l33t Enchanter batch enchanting ' .. count .. " items with '" .. currentEnchantType .. "' ...")
     else
-        Note('l33t Enchanter detected no items needing to be enchanted with ' .. currentEnchantType)
+        Note("l33t Enchanter detected no items needing to be enchanted with '" .. currentEnchantType .. "'.")
     end
 end
 
 
 function enchantOneItem(itemId)
-    SendNoEcho('get ' .. itemId .. ' ' .. currentContainerId)
+    if currentContainerId ~= 'inventory' then
+        SendNoEcho('get ' .. itemId .. ' ' .. currentContainerId)
+    end
     SendNoEcho('c ' .. currentEnchantType .. ' ' .. itemId)
-    SendNoEcho('put ' .. itemId .. ' ' .. currentContainerId)
+    if currentContainerId ~= 'inventory' then
+        SendNoEcho('put ' .. itemId .. ' ' .. currentContainerId)
+    end
 end
 
 
