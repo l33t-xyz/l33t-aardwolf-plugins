@@ -25,6 +25,14 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
+    <name>l33t Enchanter</name>
+    <author>Ruhamah</author>
+    <description>l33t Enchanter batch enchants items in containers.</description>
+    <id>1337c62fb5c642de986b1337</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_enchanter-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+  <plugin>
     <name>l33t Stopwatch</name>
     <author>Ruhamah</author>
     <description>Tracks your leveling up or power up speed.</description>

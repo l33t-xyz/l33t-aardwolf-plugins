@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_enchanter"
+   author="Ruhamah"
+   id="1337c62fb5c642de986b1337"
+   language="Lua"
+   purpose="l33t Enchanter batch enchants items in containers."
+   save_state="y"
+   date_written="2020-01-11 13:33:37"
+   requires="5.06"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_enchanter (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Enchanter casts enchants on items in your containers.
+
+Pre-sort your equipment into containers, and then run l33t Enchanter!
+
+Available enchants: Illuminate, Resonate, Solidify
+
+Coming soon: Conceal
+
+Usage:
+
+  l33t enchanter [help]          - Displays help
+  lenchant [help]
+
+  lconceal <containerId>         - NOT SUPPORTED YET
+  lilluminate <containerId>      - Casts 'illuminate' on any eligible
+                                   items in container.
+  lresonate <containerId>        - Casts 'resonate' on any eligible
+                                   items in container.
+  lsolidify <containerId>        - Casts 'solidify' on any eligible
+                                   items in container.
+
+NOTE:
+In order to not spam the server, the limit is 10 items enchanted per run.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+
+  <trigger
+   enabled="n"
+   group="l33t"
+   match="^(?P<itemId>\d+),(?P<itemFlags>K?I?M?G?H?),(?P<itemName>.*),(?P<level>\d+),(?P<itemType>\d{1,2}),(?P<isUnique>1|0),(?P<wearLoc>-?\d+),(?P<timer>-?\d+)$"
+   name="l33t_enchant_invdata_item"
+   omit_from_output="y"
+   regexp="y"
+   script="l33t_enchant_invdata_item"
+   sequence="100"
+  >
+  </trigger>
+
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l(?P<enchantType>(illuminate)|(resonate)|(solidify)) (?P<containerId>\d*)$"
+   regexp="y"
+   sequence="100"
+   script="l33t_enchant"
+  >
+  </alias>
+
+  <!--  Plugin help  -->
+
+  <alias
+   enabled="y"
+   group="l33t"
+   match="l33t_enchanter:help"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^l(?:(enchant)|(conceal)|(illuminate)|(resonate)|(solidify)) *(?:help)? *$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+
+</aliases>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+-- See: https://github.com/fiendish/aardwolfclientpackage/wiki/Using-GMCP
+require "gmcphelper" -- adds the gmcp() function for simplifying data access
+
+
+-- Globals
+
+
+PLUGIN_ID = GetPluginID()
+PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
+PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
+PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
+PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
+PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
+PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
+
+PLUGIN_URL = 'https://aard.l33t.xyz'
+
+-- Other plugins
+PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264'
+PLUGIN_ID_L33T_LUA_UTILS = 'fc6f6f198e8f442baa0be9a6'
+
+
+-- Script Locals
+
+local ENCHANT_LIMIT = 10
+
+local currentRoomInfo = nil
+local currentContainerId = nil
+local currentEnchantType = nil
+
+local nonGlowingItems = {}
+local nonHummingItems = {}
+local invisibleItems = {}
+local nonConcealedItems = {}
+
+
+function handleGMCP(text)
+    --[[
+    Room Format:
+
+    {
+        ['details'] = 'safe',
+        ['name'] = 'The Grand City of Aylor',
+        ['num'] = '32418',
+        ['exits'] = {
+            ['s'] = '32419',
+            ['u'] = '35200',
+            ['d'] = '32615',
+            ['w'] = '30518',
+            ['n'] = '32539',
+            ['e'] = '32698'
+        },
+        ['terrain'] = 'aylorcity',
+        ['coord'] = {
+            ['y'] = '20',
+            ['x'] = '30',
+            ['cont'] = '0',
+            ['id'] = '0'
+        },
+        ['outside'] = '0',
+        ['zone'] = 'aylor'
+    }
+
+--]]
+
+    if text == 'room.info' then
+        local roomInfo = gmcp('room.info')
+        if roomInfo ~= nil then
+            currentRoomInfo = roomInfo
+        end
+    end
+end
+
+
+-- Extensions
+
+
+table.reduce = function (list, fn)
+    local acc
+    for k, v in ipairs(list) do
+        if 1 == k then
+            acc = v
+        else
+            acc = fn(acc, v)
+        end
+    end
+    return acc
+end
+
+
+function sum(a, b)
+    return a + b
+end
+
+
+-- Core Functions
+
+
+function l33t_enchant(name, line, wildcards)
+    local enchantType = GetAliasWildcard(name, 'enchantType')
+    local containerId = GetAliasWildcard(name, 'containerId')
+    currentEnchantType = enchantType
+    currentContainerId = containerId
+
+    _addInvdataStartTrigger(containerId)
+    _addInvdataEndTrigger(containerId)
+
+    SendNoEcho('invdata ' .. containerId)
+end
+
+
+function _addInvdataStartTrigger(containerId)
+    local triggerName = 'l33t_enchant_invdata_start'
+    local matchText = '^{invdata ' .. containerId .. '}$'
+    local responseText = ''
+    local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
+    local color = custom_colour.NoChange
+    local wildcard = 0
+    local soundFileName = ''
+    local scriptName = 'startCapturingInvdata';
+
+    world.AddTrigger(
+        triggerName,
+        matchText,
+        responseText,
+        flags,
+        color,
+        wildcard,
+        soundFileName,
+        scriptName
+    )
+end
+
+
+function _addInvdataEndTrigger(containerId)
+    local triggerName = 'l33t_enchant_invdata_end'
+    local matchText = '^{/invdata}$'
+    local responseText = ''
+    local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
+    local color = custom_colour.NoChange
+    local wildcard = 0
+    local soundFileName = ''
+    local scriptName = 'stopCapturingInvdata'
+    AddTrigger(
+        triggerName,
+        matchText,
+        responseText,
+        flags,
+        color,
+        wildcard,
+        soundFileName,
+        scriptName
+    )
+end
+
+
+function startCapturingInvdata(name, line, wildcards)
+    EnableTrigger('l33t_enchant_invdata_item', 1)
+
+    nonGlowingItems = {}
+    nonHummingItems = {}
+    invisibleItems = {}
+    nonConcealedItems = {}
+end
+
+
+function stopCapturingInvdata(name, line, wildcards)
+    EnableTrigger('l33t_enchant_invdata_item', 0)
+
+    doBatchEnchants()
+end
+
+
+function l33t_enchant_invdata_item(name, line, wildcards)
+    local itemId = tonumber(GetTriggerWildcard(name, 'itemId'))
+    local itemFlags = GetTriggerWildcard(name, 'itemFlags')
+    local itemName = GetTriggerWildcard(name, 'itemName')
+    local level = tonumber(GetTriggerWildcard(name, 'level'))
+    local itemType = tonumber(GetTriggerWildcard(name, 'itemType'))
+    local isUnique = tonumber(GetTriggerWildcard(name, 'isUnique'))
+    local wearLoc = tonumber(GetTriggerWildcard(name, 'wearLoc'))
+    local timer = tonumber(GetTriggerWildcard(name, 'timer'))
+
+    local isGlowing = string.match(itemFlags, 'G') ~= nil
+    local isHumming = string.match(itemFlags, 'H') ~= nil
+    local isInvisible = string.match(itemFlags, 'I') ~= nil
+
+    -- Note(itemId .. ', ' .. itemFlags  .. ', ' .. (isInvisible and 1 or 0) .. '|' .. (isGlowing and 1 or 0) .. '|' .. (isHumming and 1 or 0) .. ', ' .. itemName .. ', ' ..level ..', ' .. itemType ..', ' .. isUnique ..', ' .. wearLoc ..', ' .. timer)
+
+    if not isGlowing then
+        table.insert(nonGlowingItems, itemId)
+    end
+
+    if not isHumming then
+        table.insert(nonHummingItems, itemId)
+    end
+
+    if isInvisible then
+        table.insert(invisibleItems, itemId)
+    end
+end
+
+
+function doBatchEnchants()
+    local collection = (
+        (currentEnchantType == 'illuminate' and nonGlowingItems)
+        or (currentEnchantType == 'resonate' and nonHummingItems)
+        or (currentEnchantType == 'solidify' and invisibleItems)
+        or(currentEnchantType == 'conceal' and nonConcealedItems)
+    )
+
+    local count = 0
+
+    for index, itemId in ipairs(collection) do
+        if count > ENCHANT_LIMIT then
+            -- enchants up to a certain limit per invocation
+            -- so as to not issue too many commands to the game
+            break
+        end
+
+        enchantOneItem(itemId)
+
+        count = count + 1
+    end
+
+    if count > 0 then
+        Note('l33t Enchanter batch enchanting ' .. count .. ' items with ' .. currentEnchantType .. '...')
+    else
+        Note('l33t Enchanter detected no items needing to be enchanted with ' .. currentEnchantType)
+    end
+end
+
+
+function enchantOneItem(itemId)
+    SendNoEcho('get ' .. itemId .. ' ' .. currentContainerId)
+    SendNoEcho('c ' .. currentEnchantType .. ' ' .. itemId)
+    SendNoEcho('put ' .. itemId .. ' ' .. currentContainerId)
+end
+
+
+-- Help
+
+
+function OnHelp (sName, sLine, wildcards)
+    Note(GetPluginInfo(GetPluginID(), 3))
+end
+
+
+-- Plugin Lifecycle
+
+
+function OnPluginInstall()
+    printSeparator()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' .. PLUGIN_NAME
+            .. ' (v' .. PLUGIN_VERSION .. ')'
+            .. ' by ' .. PLUGIN_AUTHOR
+            .. ' ('
+        )
+    )
+    printPluginLink()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            .. 'Loaded '
+            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+            .. PLUGIN_NUM_ALIASES .. ' aliases, '
+            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'lenchant help',
+        'CornFlowerBlue', '', '".\n'
+    )
+    printSeparator()
+end
+
+
+function OnPluginSaveState()
+end
+
+
+function OnPluginBroadcast(msg, id, name, text)
+    if id == PLUGIN_ID_GMCP_HANDLER then
+        handleGMCP(text)
+    elseif id == PLUGIN_ID_L33T_LUA_UTILS then
+        -- placeholder
+    else
+        -- do nothing, unrecognized plugin
+    end
+end
+
+
+-- Util Functions
+
+
+function printSeparator()
+    ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
+end
+
+
+function printPluginLink()
+    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+end
+
+
+function getDurationString(duration)
+    local seconds = duration
+    local hours = math.floor(seconds / 3600)
+    seconds = seconds - (hours * 3600)
+    local minutes = math.floor(seconds / 60)
+    seconds = seconds - (minutes * 60)
+
+    local durationString = ''
+    if hours > 0 then
+        durationString = durationString .. hours .. ' hours'
+    end
+
+    if minutes > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. minutes .. ' minutes'
+    end
+
+    if seconds > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. seconds .. ' seconds'
+    end
+
+    return durationString
+end
+
+
+]]>
+</script>
+
+
+</muclient>
