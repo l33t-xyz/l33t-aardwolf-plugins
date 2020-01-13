@@ -11,25 +11,25 @@
    save_state="y"
    date_written="2020-01-11 13:33:37"
    requires="5.06"
-   version="0.04"
+   version="0.05"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_enchanter (v0.04) by Ruhamah (https://aard.l33t.xyz)
+l33t_enchanter (v0.05) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Enchanter casts enchants on items in your containers.
 
 Pre-sort your equipment into containers, and then run l33t Enchanter!
 
-Available enchants: Illuminate, Resonate, Solidify
-
-Coming soon: Conceal
+Available enchants: Illuminate, Resonate, Solidify, Conceal
 
 Usage:
 
-  l33t enchanter [help]          - Displays help
+  l33t enchanter [help]
   lenchant [help]
+
+  - Displays help
 
   lenchant <enchantType> <containerId>
 
@@ -41,6 +41,12 @@ Usage:
   - Casts enchantment on any eligible items in inventory.
     Be careful that this is what you actually want; this is why
     'inventory' must be fully spelled out.
+
+  lenchant conceal <containerId>
+
+  - Casts conceal on any eligible items in container missing 'nolocate'.
+    Uses DINV in the background. Still in experimental state.
+    Recommend using with 'dinv refresh eager 20'
 
 NOTE:
 In order to not spam the server, the limit is 10 items enchanted per run.
@@ -74,18 +80,6 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   >
   </trigger>
 
-  <trigger
-   enabled="n"
-   group="l33t"
-   match="^ *(?<itemLevel>\d+) (?P<itemShortName>.*) * \((?P<itemId>\d+)\) (?P<itemType>[a-z]+) *.*$"
-   name="l33t_enchant_dinv_search_item"
-   omit_from_output="y"
-   regexp="y"
-   script="l33t_enchant_dinv_search_item"
-   sequence="100"
-  >
-  </trigger>
-
 </triggers>
 
 <!--  Aliases  -->
@@ -94,7 +88,7 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   <alias
    enabled="y"
    group="l33t"
-   match="^lenchant (?P<enchantType>(illuminate)|(resonate)|(solidify)) *(?P<containerId>\d*)$"
+   match="^ *lenchant (?P<enchantType>(illuminate)|(resonate)|(solidify)) *(?P<containerId>\d*)$"
    regexp="y"
    sequence="100"
    script="l33t_enchant"
@@ -104,7 +98,7 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   <alias
    enabled="y"
    group="l33t"
-   match="^lenchant (?P<enchantType>(illuminate)|(resonate)|(solidify)) *(?P<containerId>inventory)$"
+   match="^ *lenchant (?P<enchantType>(illuminate)|(resonate)|(solidify)) *(?P<containerId>inventory)$"
    regexp="y"
    sequence="100"
    script="l33t_enchant"
@@ -114,7 +108,7 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   <alias
    enabled="y"
    group="l33t"
-   match="^lenchant (?P<enchantType>conceal) *(?P<containerId>.+)$"
+   match="^ *lenchant (?P<enchantType>conceal) *(?P<containerId>\d+)$"
    regexp="y"
    sequence="100"
    script="l33t_enchant"
@@ -135,7 +129,7 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   <alias
    enabled="y"
    group="l33t"
-   match="^lenchant *(?:help)? *$"
+   match="^ *lenchant *(?:help)? *$"
    regexp="y"
    sequence="999"
    script="OnHelp"
@@ -145,7 +139,7 @@ The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
   <alias
    enabled="y"
    group="l33t"
-   match="^lenchant.*$"
+   match="^ *lenchant.*$"
    regexp="y"
    sequence="999"
    script="OnHelp"
@@ -181,9 +175,11 @@ PLUGIN_URL = 'https://aard.l33t.xyz'
 -- Other plugins
 PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264'
 PLUGIN_ID_L33T_LUA_UTILS = 'fc6f6f198e8f442baa0be9a6'
+PLUGIN_ID_DINV = '88c86ea252fc1918556df9fe'
 
 
 -- Script Locals
+
 
 local ENCHANT_LIMIT = 10
 
@@ -256,6 +252,15 @@ function sum(a, b)
 end
 
 
+function split(s, delimiter)
+    result = {};
+    for match in (s..delimiter):gmatch('(.-)'..delimiter) do
+        table.insert(result, match);
+    end
+    return result;
+end
+
+
 -- Core Functions
 
 
@@ -267,15 +272,7 @@ function l33t_enchant(name, line, wildcards)
 
     if enchantType == 'conceal' then
         -- conceal
-        local dinvCommand = 'dinv search objid ~flag nolocate rlocation ' .. containerId
-        --_addDinvSearchStartTrigger()
-        --_addDinvSearchEndTrigger()
-        Note("l33t Enchanter does not support 'conceal' yet. Coming soon!")
-        Note('')
-        Note("Run the 'dinv search' command to find items needing to be concealed:")
-        Note("    '" .. dinvCommand .. "'")
-        Note('')
-        --Execute(dinvCommand)
+        l33t_conceal(containerId)
     else
         -- illuminate, resonate, solidify
 
@@ -403,9 +400,11 @@ function doBatchEnchants()
             break
         end
 
-        enchantOneItem(itemId)
+        if string.len(itemId) > 0 then
+            enchantOneItem(itemId)
 
-        count = count + 1
+            count = count + 1
+        end
     end
 
     if count > 0 then
@@ -430,78 +429,40 @@ end
 -- Dinv-based enchanting
 
 
-function _addDinvSearchStartTrigger(containerId)
-    local triggerName = 'l33t_enchant_dinv_search_start'
-    --local matchText = '^Lvl Name of (?P<itemGroup>(Armor)|(Food)|(Pill)|(Potion)|(Trash)|(Treasure)|(Portal)|(Armor)|(Weapon)) .*$'
-    local matchText = '^Lvl.*$'
-    local responseText = ''
-    local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
-    local color = custom_colour.NoChange
-    local wildcard = 0
-    local soundFileName = ''
-    local scriptName = 'startCapturingDinvSearchOutput';
+function l33t_conceal(containerId)
+    local dinvQuery = '~flag nolocate location ' .. containerId
+    local dinvCommand = 'dinv search objid ' .. dinvQuery
 
-    world.AddTrigger(
-        triggerName,
-        matchText,
-        responseText,
-        flags,
-        color,
-        wildcard,
-        soundFileName,
-        scriptName
-    )
+    local getItemIdsFnName = 'getItemIds'
+    if (PluginSupports(PLUGIN_ID_DINV, getItemIdsFnName)) then
+        local retval, itemIds = CallPlugin(PLUGIN_ID_DINV, 'getItemIds', dinvQuery)
+        nonConcealedItems = split(itemIds, ',')
+
+        doBatchEnchants()
+    else
+        Note("l33t Enchanter depends on the DINV plugin to have the 'getItemIds' function.")
+    end
 end
 
 
-function _addDinvSearchEndTrigger(containerId)
-    local triggerName = 'l33t_enchant_dinv_search_end'
-    local matchText = '^{/dinv search .*}$'
-    local responseText = ''
-    local flags = trigger_flag.Enabled + trigger_flag.RegularExpression + trigger_flag.OneShot + trigger_flag.OmitFromOutput
-    local color = custom_colour.NoChange
-    local wildcard = 0
-    local soundFileName = ''
-    local scriptName = 'stopCapturingDinvSearchOutput'
-    AddTrigger(
-        triggerName,
-        matchText,
-        responseText,
-        flags,
-        color,
-        wildcard,
-        soundFileName,
-        scriptName
-    )
-end
+-- getItemIds(dinvQuery) for l33t_enchanter.xml
+-- Drop this function into Durel's aard_inventory.xml
+-- It can be placed right below `function inv.items.searchCR()~
+function getItemIds(dinvQuery)
+    local idArray, retval = inv.items.searchCR(dinvQuery)
 
+    local itemIds = ''
+    local count = 0
+    for _, objId in ipairs(idArray) do
+        if count > 0 then
+            itemIds = itemIds .. ','
+        end
+        itemIds = itemIds .. objId
+        count = count + 1
+    end
 
-function startCapturingDinvSearchOutput(name, line, wildcards)
-    EnableTrigger('l33t_enchant_dinv_search_item', 1)
-
-    nonGlowingItems = {}
-    nonHummingItems = {}
-    invisibleItems = {}
-    nonConcealedItems = {}
-end
-
-
-function stopCapturingDinvSearchOutput(name, line, wildcards)
-    EnableTrigger('l33t_enchant_dinv_search_item', 0)
-    --doBatchEnchants()
-end
-
-
-function l33t_enchant_dinv_search_item(name, line, wildcards)
-    local itemLevel = tonumber(GetTriggerWildcard(name, 'itemLevel'))
-    local itemShortName = GetTriggerWildcard(name, 'itemShortName')
-    local itemId = tonumber(GetTriggerWildcard(name, 'itemId'))
-    local itemType = GetTriggerWildcard(name, 'itemType')
-
-    Note('non-concealed item: ' .. itemShortName)
-
-    table.insert(nonConcealedItems, itemId)
-end
+    return itemIds
+end  -- getItemIds(dinvQuery)
 
 
 -- Help
