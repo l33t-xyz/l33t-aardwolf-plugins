@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2019-12-17 01:33:37"
    requires="5.06"
-   version="0.02"
+   version="0.03"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_stopwatch (v0.02) by Ruhamah (https://aard.l33t.xyz)
+l33t_stopwatch (v0.03) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Stopwatch tracks your leveling up or power up speed.
 
@@ -26,10 +26,17 @@ Usage:
 
   l33t stopwatch                 - Displays help
   l33t stopwatch channel <channel>
-                                 - Sets the channel for reporting times. Defaults to 'say'. Also recommend using 'tracker'.      
+                                 - Sets the channel for reporting times. Defaults to 'say'. Also recommend using 'tracker'.
   l33t stopwatch level           - Displays stats for level ups.
   l33t stopwatch pup             - Displays stats for power ups.
-  l33t stopwatch reset           - Reset all stats.
+  l33t stopwatch cp              - Displays stats for power ups.
+
+  l33t stopwatch reset all       - Reset all stats.
+  l33t stopwatch reset level     - Reset level stats.
+  l33t stopwatch reset pup       - Reset pup stats.
+  l33t stopwatch reset quest     - Reset quest stats.
+  l33t stopwatch reset cp        - Reset campaign stats.
+  l33t stopwatch reset gq        - Reset gquest stats.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]>
@@ -45,6 +52,8 @@ Usage:
 <!--  Triggers  -->
 
 <triggers>
+
+
   <trigger
    enabled="y"
    group="l33t"
@@ -55,6 +64,8 @@ Usage:
    sequence="1"
   >
   </trigger>
+
+
   <trigger
    enabled="y"
    group="l33t"
@@ -68,6 +79,37 @@ Usage:
    sequence="2"
   >
   </trigger>
+
+
+  <trigger
+   enabled="y"
+   group="l33t"
+   keep_evaluating="y"
+   lines_to_match="1"
+   match="^(?<questor>.*) tells you \'I have selected (?<numTargets>\d+) targets for you to hunt, (?P<player>.*)\.\'$"
+   multi_line="n"
+   name="l33t_cp_start"
+   regexp="y"
+   script="l33t_handle_cp_start"
+   sequence="4"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   group="l33t"
+   keep_evaluating="y"
+   lines_to_match="1"
+   match="^CONGRATULATIONS! You have completed your campaign\.$"
+   multi_line="n"
+   name="l33t_cp_complete"
+   regexp="y"
+   script="l33t_handle_cp_complete"
+   sequence="4"
+  >
+  </trigger>
+
+
 </triggers>
 
 <!--  Aliases  -->
@@ -76,39 +118,53 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="^l33t stopwatch channel ?(?<channel>.*)$"
+   match="^ *l33t stopwatch channel *(?<channel>.*) *$"
    regexp="y"
    sequence="100"
    script="l33t_stopwatch_channel"
   >
   </alias>
+
   <alias
    enabled="y"
    group="l33t"
-   match="^l33t stopwatch level$"
+   match="^ *l33t stopwatch level *$"
    regexp="y"
    sequence="100"
    script="l33t_stopwatch_level"
   >
   </alias>
+
   <alias
    enabled="y"
    group="l33t"
-   match="^l33t stopwatch (?:(pup)|(powerup))$"
+   match="^ *l33t stopwatch *(?:(pup)|(powerup))$"
    regexp="y"
    sequence="100"
    script="l33t_stopwatch_powerup"
   >
   </alias>
+
   <alias
    enabled="y"
    group="l33t"
-   match="^l33t stopwatch reset$"
+   match="^ *l33t stopwatch *(?:(cp)|(campaign))$"
+   regexp="y"
+   sequence="100"
+   script="l33t_stopwatch_campaign"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^ *l33t stopwatch reset *(?P<resetMode>(all)|(level)|(pup)|(quest)|(cp)|(gq)) *$"
    regexp="y"
    sequence="100"
    script="l33t_stopwatch_reset"
   >
   </alias>
+
   <!--  Plugin help  -->
   <alias
    enabled="y"
@@ -121,7 +177,7 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="^l33t stopwatch.*$"
+   match="^ *l33t stopwatch.*$"
    regexp="y"
    sequence="999"
    script="OnHelp"
@@ -139,16 +195,16 @@ Usage:
 -- Extensions
 
 
-table.reduce = function (list, fn) 
+table.reduce = function (list, fn)
     local acc
     for k, v in ipairs(list) do
         if 1 == k then
             acc = v
         else
             acc = fn(acc, v)
-        end 
-    end 
-    return acc 
+        end
+    end
+    return acc
 end
 
 
@@ -180,6 +236,20 @@ local totalLevelsGained = 0
 local lastPowerUpTimestamp = nil
 local powerUpDurations = {}
 local totalPowerUpsGained = 0
+
+local currentQuestStartTimestamp = nil
+local questDurations = {}
+local totalQuestsCompleted = 0
+
+local currentCampaignStartTimestamp = nil
+local campaignDurations = {}
+local currentCampaignNumTargets = 0
+local campaignNumTargets = {}
+local totalCampaignsCompleted = 0
+
+local currentGquestStartTimestamp = nil
+local gquestDurations = {}
+local totalGquestsCompleted = 0
 
 
 -- Core Functions
@@ -241,6 +311,37 @@ function l33t_handle_power_up(name, line, wildcards)
 end
 
 
+function l33t_handle_cp_start(name, line, wildcards)
+    local questor = GetTriggerWildcard(name, 'questor')
+    local numTargets = tonumber(GetTriggerWildcard(name, 'numTargets'))
+    local player = GetTriggerWildcard(name, 'player')
+
+    local timestamp = os.time()
+
+    currentCampaignStartTimestamp = timestamp
+    currentCampaignNumTargets = numTargets
+end
+
+
+function l33t_handle_cp_complete(name, line, wildcards)
+    local timestamp = os.time()
+
+    totalCampaignsCompleted = totalCampaignsCompleted + 1
+
+    if currentCampaignStartTimestamp ~= nil then
+        local duration = timestamp - currentCampaignStartTimestamp
+        table.insert(campaignDurations, duration)
+
+        table.insert(campaignNumTargets, currentCampaignNumTargets)
+    end
+
+    currentCampaignStartTimestamp = nil
+    currentCampaignNumTargets = 0
+
+    l33t_stopwatch_campaign()
+end
+
+
 function l33t_stopwatch_level(name, line, wildcards)
     if lastLevelUpTimestamp == nil or totalLevelsGained < 2 or #levelUpDurations == 0 then
        Note('No level ups recorded yet. Level up ' .. math.max(2 - totalLevelsGained, 0) .. ' more time(s) to start timer.')
@@ -285,23 +386,73 @@ function l33t_stopwatch_powerup(name, line, wildcards)
 end
 
 
+function l33t_stopwatch_campaign(name, line, wildcards)
+    if #campaignDurations == 0 then
+       Note('No campaigns recorded yet. Complete a campaign to start timer.')
+    else
+        local lastCampaignDuration = campaignDurations[#campaignDurations]
+        local lastCampaignNumTargets = campaignNumTargets[#campaignNumTargets]
+        local kpm = lastCampaignNumTargets / (lastCampaignDuration / 60)
+
+        local averageDuration = table.reduce(campaignDurations, sum) / totalCampaignsCompleted
+        local averageNumTargets = table.reduce(campaignNumTargets, sum) / totalCampaignsCompleted
+        local averageKpm = averageNumTargets / (averageDuration / 60)
+
+        local durationString = getDurationString(lastCampaignDuration)
+        local averageDurationString = getDurationString(averageDuration)
+
+        local msg = (
+            '@BLast Campaign Duration@W: @C' .. durationString .. '@w (' .. lastCampaignNumTargets .. ' targets @@ ' .. kpm .. ' kpm)'
+            .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w (Avg: ' .. averageNumTargets .. ' targets @@ ' .. averageKpm .. ' kpm)'
+            .. ' (over @C' .. totalCampaignsCompleted .. '@w campaigns).'
+        )
+
+        local channel = GetVariable('stopwatch_channel') or 'say'
+        SendNoEcho(channel .. ' ' .. msg)
+    end
+end
+
+
 function l33t_stopwatch_reset(name, line, wildcards)
-    resetState()
+    local resetMode = GetAliasWildcard(name, 'resetMode')
+    resetState(resetMode)
 end
 
 -- Helper Functions
 
 
-function resetState()
-    Note('Resetting l33t stopwatch state')
+function resetState(resetMode)
+    Note('Resetting l33t stopwatch state: ' .. resetMode)
 
-    lastLevelUpTimestamp = nil
-    levelUpDurations = {}
-    totalLevelsGained = 0
+    if (resetMode == 'all' or resetMode == 'level') then
+        lastLevelUpTimestamp = nil
+        levelUpDurations = {}
+        totalLevelsGained = 0
+    end
 
-    lastPowerUpTimestamp = nil
-    powerUpDurations = {}
-    totalPowerUpsGained = 0
+    if (resetMode == 'all' or resetMode == 'pup') then
+        lastPowerUpTimestamp = nil
+        powerUpDurations = {}
+        totalPowerUpsGained = 0
+    end
+
+    if (resetMode == 'all' or resetMode == 'quest') then
+        local currentQuestStartTimestamp = nil
+        local questDurations = {}
+        local totalQuestsCompleted = 0
+    end
+
+    if (resetMode == 'all' or resetMode == 'cp') then
+        local currentCampaignStartTimestamp = nil
+        local campaignDurations = {}
+        local totalCampaignsCompleted = 0
+    end
+
+    if (resetMode == 'all' or resetMode == 'gq') then
+        local currentGquestStartTimestamp = nil
+        local gquestDurations = {}
+        local totalGquestsCompleted = 0
+    end
 end
 
 
