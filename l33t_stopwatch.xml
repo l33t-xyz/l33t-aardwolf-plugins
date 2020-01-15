@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2019-12-17 01:33:37"
    requires="5.06"
-   version="0.03"
+   version="0.04"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_stopwatch (v0.03) by Ruhamah (https://aard.l33t.xyz)
+l33t_stopwatch (v0.04) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Stopwatch tracks your leveling up or power up speed.
 
@@ -437,21 +437,21 @@ function resetState(resetMode)
     end
 
     if (resetMode == 'all' or resetMode == 'quest') then
-        local currentQuestStartTimestamp = nil
-        local questDurations = {}
-        local totalQuestsCompleted = 0
+        currentQuestStartTimestamp = nil
+        questDurations = {}
+        totalQuestsCompleted = 0
     end
 
     if (resetMode == 'all' or resetMode == 'cp') then
-        local currentCampaignStartTimestamp = nil
-        local campaignDurations = {}
-        local totalCampaignsCompleted = 0
+        currentCampaignStartTimestamp = nil
+        campaignDurations = {}
+        totalCampaignsCompleted = 0
     end
 
     if (resetMode == 'all' or resetMode == 'gq') then
-        local currentGquestStartTimestamp = nil
-        local gquestDurations = {}
-        local totalGquestsCompleted = 0
+        currentGquestStartTimestamp = nil
+        gquestDurations = {}
+        totalGquestsCompleted = 0
     end
 end
 
