@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2019-12-17 01:33:37"
    requires="5.06"
-   version="0.04"
+   version="0.05"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_stopwatch (v0.04) by Ruhamah (https://aard.l33t.xyz)
+l33t_stopwatch (v0.05) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Stopwatch tracks your leveling up or power up speed.
 
@@ -445,6 +445,8 @@ function resetState(resetMode)
     if (resetMode == 'all' or resetMode == 'cp') then
         currentCampaignStartTimestamp = nil
         campaignDurations = {}
+        currentCampaignNumTargets = 0
+        campaignNumTargets = {}
         totalCampaignsCompleted = 0
     end
 
