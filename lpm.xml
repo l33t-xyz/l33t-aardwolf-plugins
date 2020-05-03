@@ -17,6 +17,14 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
+    <name>l33t Butler</name>
+    <author>Ruhamah</author>
+    <description>l33t Butler keeps rooms tidy for you!</description>
+    <id>133789dc4ce44204a494ec59</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_butler-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+  <plugin>
     <name>l33t Doorman</name>
     <author>Ruhamah</author>
     <description>l33t Doorman opens doors for you!</description>

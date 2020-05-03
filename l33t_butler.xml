@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_butler"
+   author="Ruhamah"
+   id="133789dc4ce44204a494ec59"
+   language="JScript"
+   purpose="l33t Butler keeps rooms tidy for you!"
+   save_state="y"
+   date_written="2020-05-03 13:33:37"
+   requires="5.06"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_butler (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Butler keeps rooms tidy for you!
+
+Usage:
+
+  l33t butler [help]             - Displays help
+  butler [help]                  - Displays help
+
+  butler on                      - Turns l33t Butler on
+  butler off                     - Turns l33t Butler off
+
+  butler summon                  - Summons Butler to prevent dropping
+                                   or sacrificing in room.
+  butler dismiss                 - Dismisses Butler to reallow dropping
+                                   or sacrificing in room.
+
+  butler list                    - List rooms from which l33t Butler
+                                   is summoned.
+
+Note:
+
+Requires l33t Lua utils (l33t_utils_lua) to support 'butler dismiss'
+and 'butler summon'.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.js"/>
+
+<!--  Triggers  -->
+
+<triggers>
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^ *dro(p)? *(.*)$"
+   name="safe_drop"
+   regexp="y"
+   script="safeSac"
+   sequence="101"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^ *j(u(n(k)?)?)? *(.*)$"
+   name="safe_junk"
+   regexp="y"
+   script="safeSac"
+   sequence="101"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^ *sac(r(i(f(i(c(e)?)?)?)?)?)? *(.*)$"
+   name="safe_sac"
+   regexp="y"
+   script="safeSac"
+   sequence="101"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^butler on(?P<silent> silent)?$"
+   name="butler_on"
+   regexp="y"
+   script="butlerOn"
+   sequence="101"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^butler off(?P<silent> silent)?$"
+   name="butler_off"
+   regexp="y"
+   script="butlerOff"
+   sequence="102"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^butler dismiss$"
+   regexp="y"
+   script="dismissButler"
+   sequence="103"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^butler summon$"
+   regexp="y"
+   script="summonButler"
+   sequence="104"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^butler list$"
+   regexp="y"
+   script="butlerListSummonedRooms"
+   sequence="104"
+  >
+  </alias>
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t"
+   match="l33t_butler:help"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^butler.*$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+</aliases>
+
+<!--  Timers  -->
+
+<timers>
+</timers>
+
+<!--  Variables  -->
+
+<variables>
+</variables>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+// Globals
+
+
+var PLUGIN_ID = GetPluginID();
+var PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1);
+var PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2);
+var PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19);
+var PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9);
+var PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10);
+var PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11);
+
+var PLUGIN_URL = 'https://aard.l33t.xyz';
+
+// Other plugins
+var PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264';
+var PLUGIN_ID_L33T_LUA_UTILS = '13376f198e8f442baa0be9a6';
+
+
+// Script Locals
+
+var BUTLER_SUMMONED_PREFIX = 'summoned_room_';
+
+
+var currentRoomId = null;
+var currentRoomName = null;
+var currentZone = null;
+
+var butlerEnabled = false;
+
+
+function handleGMCP(text) {
+}
+
+
+function handleL33tLuaUtilsUpdate(text) {
+    if (text === 'room.updated') {
+        currentRoomId = GetPluginVariable(PLUGIN_ID_L33T_LUA_UTILS, 'currentRoomId');
+        currentRoomName = GetPluginVariable(PLUGIN_ID_L33T_LUA_UTILS, 'currentRoomName');
+        currentZone = GetPluginVariable(PLUGIN_ID_L33T_LUA_UTILS, 'currentZone');
+        //world.Note('Room updated - [' + currentRoomName + '] (' + currentRoomId + ') [' + currentZone + ']');
+    }
+}
+
+
+// Core Functions
+
+
+function safeSac(name, line, wildcards) {
+    if (butlerEnabled && currentRoomHasButlerSummoned()) {
+        world.Note("l33t Butler is currently summoned for the current room, and dropping or sacrificing items is prohibited. To dismiss l33t Butler from this room, type 'butler dismiss'.");
+    } else {
+        world.Send(line);
+    }
+}
+
+
+function butlerOn(name, line, wildcards) {
+    butlerEnabled = true;
+
+    var silent = world.GetAliasWildcard(name, 'silent');
+    if (!silent) {
+        world.Note('l33t Butler enabled.');
+    }
+}
+
+
+function butlerOff(name, line, wildcards) {
+    butlerEnabled = false;
+
+    var silent = world.GetAliasWildcard(name, 'silent');
+    if (!silent) {
+        world.Note('l33t Butler disabled.');
+    }
+}
+
+
+function getSummonedRoomVarName() {
+    var varName = BUTLER_SUMMONED_PREFIX + currentRoomId;
+    return varName;
+}
+
+
+function summonButler() {
+    if (currentRoomId === null) {
+        world.Note("Current room is not known. Try moving around or 'look'.");
+    } else {
+        world.SetVariable(getSummonedRoomVarName(), '[' + currentZone + '][' + currentRoomName + ']');
+        world.Note('l33t Butler at your service at [' + currentRoomName + '] (' + currentRoomId + ')!');
+        world.Note('Dropping or sacrificing items in current room now prohibited.');
+    }
+}
+
+
+function dismissButler() {
+    if (currentRoomId === null) {
+        world.Note("Current room is not known. Try moving around or 'look'.");
+    } else if (currentRoomHasButlerSummoned()) {
+        world.DeleteVariable(getSummonedRoomVarName());
+        world.Note('You inform l33t Butler its services are not needed at [' + currentRoomName + '] (' + currentRoomId + ').');
+        world.Note('Dropping or sacrificing items in current room now allowed.');
+    } else {
+        world.Note('l33t Butler is dimissed at [' + currentRoomName + '] (' + currentRoomId + ')!');
+    }
+}
+
+
+function butlerListSummonedRooms() {
+    Note('These are the rooms which l33t Butler has been summoned at:');
+
+    var varNames = new VBArray(world.GetPluginVariableList(world.GetPluginID())).toArray();
+    for (var i=0; i < varNames.length; ++i) {
+        var varName = varNames[i];
+
+        if (varName.substring(0, BUTLER_SUMMONED_PREFIX.length) === BUTLER_SUMMONED_PREFIX)  {
+            var roomName = world.GetVariable(varName);
+            var roomId = varName.replace(BUTLER_SUMMONED_PREFIX, '');
+            world.Note('- ' + roomName + ' (' + roomId + ')');
+        } else {
+            // variables that don't apply
+            //world.Note(varName);
+        }
+    }
+}
+
+
+function currentRoomHasButlerSummoned() {
+    var stored = world.GetVariable(getSummonedRoomVarName());
+    var isSummoned = stored !== undefined && stored !== null && stored !== '';
+
+    return isSummoned;
+}
+
+
+// Help
+
+
+function OnHelp (sName, sLine, wildcards) {
+    world.Note(world.GetPluginInfo(world.GetPluginID(), 3));
+}
+
+
+// Plugin Lifecycle
+
+
+function OnPluginInstall() {
+    printSeparator();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' + PLUGIN_NAME
+            + ' (v' + PLUGIN_VERSION + ')'
+            + ' by ' + PLUGIN_AUTHOR
+            + ' ('
+        )
+    );
+    printPluginLink();
+    world.ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            + 'Loaded '
+            + PLUGIN_NUM_TRIGGERS + ' triggers, '
+            + PLUGIN_NUM_ALIASES + ' aliases, '
+            + PLUGIN_NUM_TIMERS + ' timers.\n\n'
+        )
+    );
+    world.ColourTell('CornFlowerBlue', '', 'Type "');
+    world.ColourTell('MediumSeaGreen', '', 'butler help');
+    world.ColourTell('CornFlowerBlue', '', '".\n');
+    printSeparator();
+
+    if (GetVariable('butler_enabled') === 'true') {
+        butlerOn();
+    } else {
+        butlerOff();
+    }
+}
+
+
+function OnPluginSaveState() {
+    if (butlerEnabled) {
+        world.SetVariable('butler_enabled', 'true');
+    } else {
+        world.SetVariable('butler_enabled', 'false');
+    }
+}
+
+
+function OnPluginBroadcast(msg, id, name, text) {
+    if (id === PLUGIN_ID_GMCP_HANDLER) {
+        handleGMCP(text);
+    } else if (id === PLUGIN_ID_L33T_LUA_UTILS) {
+        handleL33tLuaUtilsUpdate(text);
+    } else {
+        // do nothing, unrecognized plugin
+    }
+}
+
+
+// Util Functions
+
+
+function printSeparator() {
+    world.ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    );
+}
+
+
+function printPluginLink() {
+    world.Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1);
+}
+
+
+]]>
+</script>
+
+
+</muclient>
