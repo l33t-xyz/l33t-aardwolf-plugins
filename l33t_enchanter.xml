@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2020-01-11 13:33:37"
    requires="5.06"
-   version="0.05"
+   version="0.06"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_enchanter (v0.05) by Ruhamah (https://aard.l33t.xyz)
+l33t_enchanter (v0.06) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Enchanter casts enchants on items in your containers.
 
@@ -174,7 +174,7 @@ PLUGIN_URL = 'https://aard.l33t.xyz'
 
 -- Other plugins
 PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264'
-PLUGIN_ID_L33T_LUA_UTILS = 'fc6f6f198e8f442baa0be9a6'
+PLUGIN_ID_L33T_LUA_UTILS = '13376f198e8f442baa0be9a6'
 PLUGIN_ID_DINV = '88c86ea252fc1918556df9fe'
 
 

@@ -5,18 +5,18 @@
 <plugin
    name="l33t_stopwatch"
    author="Ruhamah"
-   id="f511200e0ba60e7ecbb9d220"
+   id="1337200e0ba60e7ecbb9d220"
    language="Lua"
    purpose="Stopwatch tracks your leveling up or power up speed."
    save_state="y"
    date_written="2019-12-17 01:33:37"
    requires="5.06"
-   version="0.05"
+   version="0.06"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_stopwatch (v0.05) by Ruhamah (https://aard.l33t.xyz)
+l33t_stopwatch (v0.06) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Stopwatch tracks your leveling up or power up speed.
 

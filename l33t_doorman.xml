@@ -5,18 +5,18 @@
 <plugin
    name="l33t_doorman"
    author="Ruhamah"
-   id="cbc0a4223f5a4399a061ebcd"
+   id="1337a4223f5a4399a061ebcd"
    language="JScript"
    purpose="l33t Doorman opens doors for you!"
    save_state="y"
    date_written="2019-12-28 13:33:37"
    requires="5.06"
-   version="0.01"
+   version="0.02"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_doorman (v0.01) by Ruhamah (https://aard.l33t.xyz)
+l33t_doorman (v0.02) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Doorman automagically opens closed doors for you.
 
@@ -194,7 +194,7 @@ var PLUGIN_URL = 'https://aard.l33t.xyz';
 
 // Other plugins
 var PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264';
-var PLUGIN_ID_L33T_LUA_UTILS = 'fc6f6f198e8f442baa0be9a6';
+var PLUGIN_ID_L33T_LUA_UTILS = '13376f198e8f442baa0be9a6';
 
 
 // Script Locals
