@@ -5,7 +5,7 @@
 <plugin
    name="l33t_beacons"
    author="Ruhamah"
-   id="50bfe7617d60469685e1470c"
+   id="1337e7617d60469685e1470c"
    language="Lua"
    purpose="l33t beacons saves rooms to keywords to enable fast recall using those keywords"
    save_state="y"
