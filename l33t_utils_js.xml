@@ -11,18 +11,18 @@
    save_state="y"
    date_written="2019-12-28 13:33:37"
    requires="5.06"
-   version="0.03"
+   version="0.04"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_utils_js (v0.03) by Ruhamah (https://aard.l33t.xyz)
+l33t_utils_js (v0.04) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Utils is a bunch of convenience utilities and aliases.
 
 Usage:
 
-  l33t utils [help]              - Displays help
+  l33t [js]utils [help]          - Displays help
 
 
   cycle N command1[,command2[,command3[,command4,[...,commandN]]]]
@@ -94,7 +94,7 @@ For other useful plugins, check out l33t Plugin Manager ('lpm').
   <alias
    enabled="y"
    group="l33t"
-   match="^l33t *(utils)?.*$"
+   match="^l33t *(js)?utils.*$"
    regexp="y"
    sequence="999"
    script="OnHelp"

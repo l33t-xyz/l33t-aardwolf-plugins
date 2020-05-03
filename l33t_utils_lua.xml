@@ -11,19 +11,19 @@
    save_state="y"
    date_written="2019-12-29 01:33:37"
    requires="5.06"
-   version="0.02"
+   version="0.03"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_utils_lua (v0.02) by Ruhamah (https://aard.l33t.xyz)
+l33t_utils_lua (v0.03) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Lua Utils provides advance functionality for other
 l33t plugins, as Lua-to-Lua calls are more powerful.
 
 Usage:
 
-  l33t luautils [help]           - Displays help
+  l33t [lua]utils [help]         - Displays help
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]>
@@ -56,7 +56,7 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="^l33t *((utils)|(luautils))?.*$"
+   match="^l33t *(lua)?utils.*$"
    regexp="y"
    sequence="999"
    script="OnHelp"

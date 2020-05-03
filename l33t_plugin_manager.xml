@@ -66,6 +66,14 @@ l33t_plugin_manager (v0.11) by Ruhamah (https://aard.l33t.xyz)
    >
    </alias>
    <alias
+    match="^l33t help$"
+    regexp="y"
+    enabled="y"
+    sequence="100"
+    script="lpm_help"
+   >
+   </alias>
+   <alias
     match="^lpm reset$"
     regexp="y"
     enabled="y"
