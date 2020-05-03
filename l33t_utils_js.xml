@@ -5,18 +5,18 @@
 <plugin
    name="l33t_utils_js"
    author="Ruhamah"
-   id="a589fcd28fab4b2b93c9ace2"
+   id="1337fcd28fab4b2b93c9ace2"
    language="JScript"
    purpose="l33t convenience utilities written in JScript"
    save_state="y"
    date_written="2019-12-28 13:33:37"
    requires="5.06"
-   version="0.02"
+   version="0.03"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_utils_js (v0.02) by Ruhamah (https://aard.l33t.xyz)
+l33t_utils_js (v0.03) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Utils is a bunch of convenience utilities and aliases.
 
@@ -39,6 +39,8 @@ Usage:
   Examples:
     3x clap
     5x give Ruhamah trivia
+
+For other useful plugins, check out l33t Plugin Manager ('lpm').
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]>
 </description>
@@ -92,7 +94,7 @@ Usage:
   <alias
    enabled="y"
    group="l33t"
-   match="^l33t utils.*$"
+   match="^l33t *(utils)?.*$"
    regexp="y"
    sequence="999"
    script="OnHelp"
