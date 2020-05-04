@@ -9,15 +9,18 @@
    purpose="Manages updates for l33t.xyz plugins"
    date_written="2019-12-16 01:33:37"
    requires="4.76"
-   version="0.11"
+   version="0.12"
    save_state="y"
    >
 <description trim="y">
 <![CDATA[
-l33t_plugin_manager (v0.11) by Ruhamah (https://aard.l33t.xyz)
+l33t_plugin_manager (v0.12) by Ruhamah (https://aard.l33t.xyz)
 
 >    lpm
         - display summary of all plugins
+
+>    lpm help
+        - displays this help file :)
 
 >    lpm install [number]
         - downloads and installs/updates the plugin
@@ -34,23 +37,15 @@ l33t_plugin_manager (v0.11) by Ruhamah (https://aard.l33t.xyz)
 >    lpm reset
         - resets all retained information about previous updates
 
->    lpm help
-        - displays this help file :)
+>    lpm unlock <key>
+        - Unlock premium plugins
 
 ]]>
 </description>
 </plugin>
 <aliases>
   <alias
-   match="^test$"
-   regexp="y"
-   enabled="y"
-   sequence="100"
-   script=""
-  >
-  </alias>
-  <alias
-   match="^lpm$"
+   match="^ *lpm *$"
    regexp="y"
    enabled="y"
    sequence="100"
@@ -58,7 +53,7 @@ l33t_plugin_manager (v0.11) by Ruhamah (https://aard.l33t.xyz)
    >
    </alias>
    <alias
-    match="^lpm help$"
+    match="^ *lpm help *$"
     regexp="y"
     enabled="y"
     sequence="100"
@@ -74,7 +69,7 @@ l33t_plugin_manager (v0.11) by Ruhamah (https://aard.l33t.xyz)
    >
    </alias>
    <alias
-    match="^lpm reset$"
+    match="^ *lpm reset *$"
     regexp="y"
     enabled="y"
     sequence="100"
@@ -82,7 +77,7 @@ l33t_plugin_manager (v0.11) by Ruhamah (https://aard.l33t.xyz)
    >
    </alias>
    <alias
-    match="^lpm update ?(?<index>[0-9]+)?$"
+    match="^ *lpm update *(?<index>[0-9]+)?$"
     regexp="y"
     enabled="y"
     sequence="100"
@@ -90,7 +85,7 @@ l33t_plugin_manager (v0.11) by Ruhamah (https://aard.l33t.xyz)
    >
    </alias>
    <alias
-    match="^lpm install (?<index>[0-9]+)$"
+    match="^ *lpm install *(?<index>[0-9]+)$"
     regexp="y"
     enabled="y"
     sequence="100"
@@ -98,11 +93,19 @@ l33t_plugin_manager (v0.11) by Ruhamah (https://aard.l33t.xyz)
    >
    </alias>
    <alias
-    match="^lpm reload (?<index>[0-9]+)$"
+    match="^ *lpm reload *(?<index>[0-9]+)$"
     regexp="y"
     enabled="y"
     sequence="100"
     script="lpm_reload"
+   >
+   </alias>
+   <alias
+    match="^ *lpm unlock *(?<key>[A-Za-z0-9]*)$"
+    regexp="y"
+    enabled="y"
+    sequence="100"
+    script="lpm_unlock"
    >
    </alias>
 </aliases>
@@ -112,6 +115,7 @@ l33t_plugin_manager (v0.11) by Ruhamah (https://aard.l33t.xyz)
 
 
 -- Globals
+
 
 PLUGIN_ID = GetPluginID()
 PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
@@ -124,29 +128,73 @@ PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
 PLUGIN_URL = 'https://aard.l33t.xyz'
 
 
+-- Other plugins
+
+
+PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264'
+PLUGIN_ID_L33T_LUA_UTILS = '13376f198e8f442baa0be9a6'
+
+
 -- Locals and Imports
 
 
 local async = require 'async'
-local last_update
+local urllib = require "socket.url"
+
+require 'json'
 require 'zip'
 require 'serialize'
+
+local last_update
+
 local installedPlugins = {}
 local lastListHash
 local currentPlugin = {}
 local pluginList = {}
 local updatePlugin = {}
 local pListNum = 0
-local pluginListUrl = 'https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/lpm.xml'
+local basicPluginListUrl = 'https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/lpm.xml'
 local lastPluginList
+
+local username, key
+local L33T_BASE_URL = 'http://l33t.xyz'
+local L33T_PREMIUM_UNLOCK_URL = L33T_BASE_URL .. '/api/aardwolf/premium/unlock'
+local L33T_PREMIUM_PLUGIN_LIST_URL = L33T_BASE_URL .. '/aardwolf/premium/list'
 
 
 -- Core Functions
 
 
+function determineHttpMode(url)
+    local http_mode = string.sub(url, 1, 5)
+    if http_mode == 'https' then
+        http_mode = string.upper(http_mode)
+    else
+        http_mode = 'HTTP'
+    end
+
+    return http_mode
+end
+
+
+function getPluginListUrl()
+   local pluginListUrl
+   if isPremiumUnlocked() then
+      local token = GetVariable('L33T_PREMIUM_TOKEN')
+      pluginListUrl = L33T_PREMIUM_PLUGIN_LIST_URL .. '?token=' .. urllib.escape(token)
+   else
+      pluginListUrl = basicPluginListUrl
+   end
+
+   return pluginListUrl
+end
+
+
 function lpm_main(name, line, wc)
     printmsg('*** Requesting plugin/update list from server... Please wait.\r\n\r\n')
-    async.HEAD(pluginListUrl, async_head_plist, 'HTTPS', 120)
+    local url = getPluginListUrl()
+    local http_mode = determineHttpMode(url)
+    async.HEAD(url, async_head_plist, http_mode, 120)
 end
 
 
@@ -186,7 +234,8 @@ function lpm_update(name, line, wc)
     if wc.index == '' then
         printmsg('*** Checking if update is available for l33t.xyz Plugin Manager... Please wait.\r\n\r\n')
         local url = 'https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_plugin_manager.xml'
-        async.doAsyncRemoteRequest(url, async_lpm_download_complete, 'HTTPS', 120)
+        local http_mode = determineHttpMode(url)
+        async.doAsyncRemoteRequest(url, async_lpm_download_complete, http_mode, 120)
     else
         Execute('lpm install ' .. wc.index)
     end
@@ -203,6 +252,67 @@ function lpm_help(name, line, wc)
     print('')
 end
 
+-- L33t Premium Functions
+
+
+function buildL33tPayload(username, key)
+   local payload = '{"username": "' .. username .. '", "key": "' .. key .. '"}'
+   return payload
+end
+
+
+function isPremiumUnlocked()
+   local token = GetVariable('L33T_PREMIUM_TOKEN')
+   local isUnlocked = token and 1
+   return isUnlocked
+end
+
+
+function lpm_unlock(name, line, wc)
+   if isPremiumUnlocked() then
+      printmsg('Already unlocked l33t premium plugins.')
+   else
+      if not username then
+         any, username = CallPlugin(PLUGIN_ID_GMCP_HANDLER, 'gmcpval', 'char.base.name')
+      end
+
+      key = wc.key
+      if key then
+         local url = L33T_PREMIUM_UNLOCK_URL
+         local http_mode = determineHttpMode(url)
+
+         local timeout_secs = 15
+         local timeout_callback = nil
+         local payload = buildL33tPayload(username, key)
+
+         async.doAsyncRemoteRequest(
+            url,
+            async_lpm_unlock_complete,
+            http_mode,
+            timeout_secs,
+            timeout_callback,
+            payload
+         )
+      else
+         printmsg('No unlock key specified.')
+      end
+   end
+end
+
+
+function async_lpm_unlock_complete(retval, responseContent, status, headers, full_stats, request_url)
+   if status == 200 then
+      local payload = json.decode(responseContent)
+      local token = payload.token
+
+      SetVariable('L33T_PREMIUM_TOKEN', token)
+      printmsg('Successfully unlocked l33t premium plugins!')
+   else
+      printmsg('Failed to unlock l33t premium plugins. Check username or key.')
+      printmsg('To obtain a key to unlock premium plugins, send a tell to Ruhamah.')
+   end
+end
+
 
 -- Helper Functions
 
@@ -210,7 +320,10 @@ end
 function async_head_plist(retval, page, status, headers, full_status, request_url)
     if (lastListHash ~= nil and lastListHash ~= headers['etag']) or lastPluginList == nil then
         --print('No list hash yet or different one, storing ' .. headers['etag'] .. ' and beginning download')
-       async.doAsyncRemoteRequest(pluginListUrl, async_xml_download_complete, 'HTTPS', 120)
+        local url = getPluginListUrl()
+        local http_mode = determineHttpMode(url)
+
+        async.doAsyncRemoteRequest(url, async_xml_download_complete, http_mode, 120)
     else
         for p = 1, #lastPluginList do
             local thisPlugin = lastPluginList[p]
@@ -462,12 +575,7 @@ end
 
 
 function get_plugin_info(plugin)
-    local http_mode = string.sub(plugin.download, 1, 5)
-    if http_mode == 'https' then
-        http_mode = string.upper(http_mode)
-    else
-        http_mode = 'HTTP'
-    end
+    local http_mode = determineHttpMode(plugin.download)
     async.HEAD(plugin.download, async_head_plugin, http_mode, 120)
 end
 
@@ -475,12 +583,7 @@ end
 function install_plugin(plugin)
     --print('plugin.ids[1]: ' .. plugin.ids[1])
     url = plugin.download
-    local http_mode = string.sub(url, 1, 5)
-    if http_mode == 'https' then
-        http_mode = string.upper(http_mode)
-    else
-        http_mode = 'HTTP'
-    end
+    local http_mode = determineHttpMode(url)
     updatePlugin = plugin
     async.doAsyncRemoteRequest(url, async_plugin_download_complete, http_mode, 120)
 end
