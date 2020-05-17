@@ -12,6 +12,7 @@
 
 - **l33t Aarchaeology Reporter** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_aarch_reporter.xml)) - Tracks and reports collected and missing Aarchaeology items.
 - **l33t Beacons** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_beacons.xml)) - Saves rooms to keywords to enable fast recall using those keywords.
+- **l33t Bin** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_bin-latest.zip)) - Shares selected text to l33t bin (similar to mudbin, pastebin, hastebin).
 - **l33t Butler** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_butler.xml)) - l33t Butler keeps rooms tidy for you!
 - **l33t Doorman** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_doorman.xml)) - l33t Doorman opens doors for you!
 - **l33t Stopwatch** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_stopwatch.xml)) - Tracks your leveling up or power up speed.
