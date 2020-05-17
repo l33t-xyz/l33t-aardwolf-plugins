@@ -17,6 +17,14 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
+    <name>l33t Bin</name>
+    <author>Ruhamah</author>
+    <description>Shares selected text to l33t bin (similar to mudbin, pastebin, hastebin).</description>
+    <id>1337b0721cd04ee582e2e1ca</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_bin-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+  <plugin>
     <name>l33t Butler</name>
     <author>Ruhamah</author>
     <description>l33t Butler keeps rooms tidy for you!</description>
