@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2020-05-03 13:33:37"
    requires="5.06"
-   version="0.02"
+   version="0.03"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_butler (v0.02) by Ruhamah (https://aard.l33t.xyz)
+l33t_butler (v0.03) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Butler keeps rooms tidy for you!
 
@@ -35,6 +35,11 @@ Usage:
 
   butler list                    - List rooms from which l33t Butler
                                    is summoned.
+
+  butler allow                   - Allows Butler to drop specific items
+  butler disallow                - Remove item from drop whitelist
+
+  butler whitelist               - List items that are allowed to drop
 
 Note:
 
@@ -63,7 +68,7 @@ and 'butler summon'.
   <alias
    enabled="y"
    group="l33t_butler"
-   match="^ *dro(p)? +(.*)$"
+   match="^ *dro(p)? +(?P<item_id>.*)$"
    name="safe_drop"
    regexp="y"
    script="safeSac"
@@ -84,7 +89,7 @@ and 'butler summon'.
    enabled="y"
    group="l33t_butler"
    match="^ *sac(r(i(f(i(c(e)?)?)?)?)?)? +(.*)$"
-   name="safe_sac"
+   name="safeSac"
    regexp="y"
    script="safeSac"
    sequence="101"
@@ -110,10 +115,11 @@ and 'butler summon'.
    sequence="102"
   >
   </alias>
+      
   <alias
    enabled="y"
    group="l33t_butler"
-   match="^butler dismiss$"
+   match="^butler +dismiss$"
    regexp="y"
    script="dismissButler"
    sequence="103"
@@ -122,7 +128,7 @@ and 'butler summon'.
   <alias
    enabled="y"
    group="l33t_butler"
-   match="^butler summon$"
+   match="^butler +summon$"
    regexp="y"
    script="summonButler"
    sequence="104"
@@ -131,10 +137,37 @@ and 'butler summon'.
   <alias
    enabled="y"
    group="l33t_butler"
-   match="^butler list$"
+   match="^butler +list$"
    regexp="y"
    script="butlerListSummonedRooms"
    sequence="104"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^butler +allow +(?P<item_id>\d+)$"
+   regexp="y"
+   script="butlerAllow"
+   sequence="105"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^butler +disallow +(?P<item_id>\d+)$"
+   regexp="y"
+   script="butlerDisallow"
+   sequence="105"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_butler"
+   match="^butler +whitelist$"
+   regexp="y"
+   script="butlerListAllowed"
+   sequence="105"
   >
   </alias>
   <!--  Plugin help  -->
@@ -195,6 +228,7 @@ var PLUGIN_ID_L33T_LUA_UTILS = '13376f198e8f442baa0be9a6';
 // Script Locals
 
 var BUTLER_SUMMONED_PREFIX = 'summoned_room_';
+var BUTLER_ALLOWED_PREFIX = 'allowed_';
 
 
 var currentRoomId = null;
@@ -222,7 +256,8 @@ function handleL33tLuaUtilsUpdate(text) {
 
 
 function safeSac(name, line, wildcards) {
-    if (butlerEnabled && currentRoomHasButlerSummoned()) {
+    var itemId = world.GetAliasWildcard(name, 'item_id');
+    if (butlerEnabled && currentRoomHasButlerSummoned() && (typeof(itemId) === 'undefined' || isItemDropAllowed(itemId))) {
         world.Note("l33t Butler is currently summoned for the current room, and dropping or sacrificing items is prohibited. To dismiss l33t Butler from this room, type 'butler dismiss'.");
     } else {
         world.Send(line);
@@ -299,11 +334,49 @@ function butlerListSummonedRooms() {
 }
 
 
+function isItemDropAllowed(itemId) {
+    var isAllowed = world.GetVariable(BUTLER_ALLOWED_PREFIX + itemId) === '1';
+    return isAllowed;
+}
+
+
+function butlerAllow(name, line, wildcards) {
+    var itemId = world.GetAliasWildcard(name, 'item_id');
+    world.SetVariable(BUTLER_ALLOWED_PREFIX + itemId, '1');
+    world.Note('l33t Butler now allows dropping ' + itemId);
+}
+
+
+function butlerDisallow() {
+    var itemId = world.GetAliasWildcard(name, 'item_id');
+    world.DeleteVariable(BUTLER_ALLOWED_PREFIX + itemId);
+    world.Note('l33t Butler now disallows dropping ' + itemId);
+}
+
+
 function currentRoomHasButlerSummoned() {
     var stored = world.GetVariable(getSummonedRoomVarName());
     var isSummoned = stored !== undefined && stored !== null && stored !== '';
 
     return isSummoned;
+}
+
+
+function butlerListAllowed() {
+    Note('These are the items which l33t Butler has whitelisted to drop:');
+
+    var varNames = new VBArray(world.GetPluginVariableList(world.GetPluginID())).toArray();
+    for (var i=0; i < varNames.length; ++i) {
+        var varName = varNames[i];
+
+        if (varName.substring(0, BUTLER_ALLOWED_PREFIX.length) === BUTLER_ALLOWED_PREFIX)  {
+            var itemId = varName.replace(BUTLER_ALLOWED_PREFIX, '');
+            world.Note('- ' + itemId);
+        } else {
+            // variables that don't apply
+            //world.Note(varName);
+        }
+    }
 }
 
 
