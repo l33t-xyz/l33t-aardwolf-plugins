@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2020-05-03 13:33:37"
    requires="5.06"
-   version="0.03"
+   version="0.04"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_butler (v0.03) by Ruhamah (https://aard.l33t.xyz)
+l33t_butler (v0.04) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Butler keeps rooms tidy for you!
 
@@ -68,7 +68,7 @@ and 'butler summon'.
   <alias
    enabled="y"
    group="l33t_butler"
-   match="^ *dro(p)? +(?P<item_id>.*)$"
+   match="^ *dro(p)? +(?P<item_id>.+)$"
    name="safe_drop"
    regexp="y"
    script="safeSac"
@@ -78,7 +78,7 @@ and 'butler summon'.
   <alias
    enabled="y"
    group="l33t_butler"
-   match="^ *j(u(n(k)?)?)? +(.*)$"
+   match="^ *j(u(n(k)?)?)? +(?P<item_id>.+)$"
    name="safe_junk"
    regexp="y"
    script="safeSac"
@@ -88,7 +88,7 @@ and 'butler summon'.
   <alias
    enabled="y"
    group="l33t_butler"
-   match="^ *sac(r(i(f(i(c(e)?)?)?)?)?)? +(.*)$"
+   match="^ *sac(r(i(f(i(c(e)?)?)?)?)?)? +(?P<item_id>.+)$"
    name="safeSac"
    regexp="y"
    script="safeSac"
@@ -257,10 +257,11 @@ function handleL33tLuaUtilsUpdate(text) {
 
 function safeSac(name, line, wildcards) {
     var itemId = world.GetAliasWildcard(name, 'item_id');
-    if (butlerEnabled && currentRoomHasButlerSummoned() && (typeof(itemId) === 'undefined' || isItemDropAllowed(itemId))) {
-        world.Note("l33t Butler is currently summoned for the current room, and dropping or sacrificing items is prohibited. To dismiss l33t Butler from this room, type 'butler dismiss'.");
-    } else {
+               
+    if (isItemDropAllowed(itemId)) {
         world.Send(line);
+    } else {
+        world.Note("l33t Butler is currently summoned for the current room, and dropping or sacrificing items is prohibited. To dismiss l33t Butler from this room, type 'butler dismiss'.");
     }
 }
 
@@ -335,7 +336,13 @@ function butlerListSummonedRooms() {
 
 
 function isItemDropAllowed(itemId) {
-    var isAllowed = world.GetVariable(BUTLER_ALLOWED_PREFIX + itemId) === '1';
+    var isAllowed = (
+        !isButlerActive()
+        || (
+            typeof(itemId) !== 'undefined'
+            && world.GetVariable(BUTLER_ALLOWED_PREFIX + itemId) === '1'
+        )
+    );
     return isAllowed;
 }
 
@@ -351,6 +358,12 @@ function butlerDisallow() {
     var itemId = world.GetAliasWildcard(name, 'item_id');
     world.DeleteVariable(BUTLER_ALLOWED_PREFIX + itemId);
     world.Note('l33t Butler now disallows dropping ' + itemId);
+}
+
+
+function isButlerActive() {
+    var isActive = butlerEnabled && currentRoomHasButlerSummoned();
+    return isActive;
 }
 
 
