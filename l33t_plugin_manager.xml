@@ -160,6 +160,7 @@ local username, key
 local L33T_BASE_URL = 'https://l33t.xyz'
 local L33T_PREMIUM_UNLOCK_URL = L33T_BASE_URL .. '/api/aardwolf/premium/unlock'
 local L33T_PREMIUM_PLUGIN_LIST_URL = L33T_BASE_URL .. '/aardwolf/premium/list'
+local L33T_PREMIUM_MOD_DOWNLOADS_URL = L33T_BASE_URL .. '/aardwolf/mods'
 
 
 -- Core Functions
@@ -410,6 +411,16 @@ function async_head_plugin(retval, page, status, headers, full_status, request_u
                 print('\r\n\r\n')
             end
         end
+
+        if isPremiumUnlocked() then
+            local token = GetVariable('L33T_PREMIUM_TOKEN')
+            local modListUrl = L33T_PREMIUM_MOD_DOWNLOADS_URL .. '?token=' .. urllib.escape(token)
+            print('****** l33t PREMIUM unlocked ******')
+            Hyperlink(modListUrl, 'Click to Download l33t PREMIUM Aardwolf mods', 'Click to download l33t PREMIUM Aardwolf mods', 'yellowgreen', '', 1)
+            print('')
+            print('')
+        end
+
         ColourTell('LightSkyBlue', '', '** l33t.xyz writes plugins for fun, and to share with others.\r\n** If you find them useful and would like to donate, we do accept PayPal at: ')
         Hyperlink('https://paypal.me/l33tdotxyz', 'https://paypal.me/l33tdotxyz', 'Click to donate via PayPal', 'yellowgreen', '', 1)
         print('')
