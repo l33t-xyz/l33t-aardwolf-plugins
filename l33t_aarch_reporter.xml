@@ -298,7 +298,7 @@ function prepareAarchReport(containerId)
     )
 
     SendNoEcho('invdata ' .. containerId)
- end
+end
 
 
 function setAarchContainerId(containerId)
