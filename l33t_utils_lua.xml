@@ -89,7 +89,8 @@ PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
 PLUGIN_URL = 'https://aard.l33t.xyz'
 
 -- Other plugins
-PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264';
+PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264'
+PLUGIN_ID_DINV = '88c86ea252fc1918556df9fe'
 
 
 -- Script Locals
