@@ -7,7 +7,7 @@
    author="Ruhamah"
    id="1337200e0ba60e7ecbb9d220"
    language="Lua"
-   purpose="Stopwatch tracks your leveling up or power up speed."
+   purpose="Stopwatch tracks your leveling up, power up, and CP speeds."
    save_state="y"
    date_written="2019-12-17 01:33:37"
    requires="5.06"
@@ -18,9 +18,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 l33t_stopwatch (v0.07) by Ruhamah (https://aard.l33t.xyz)
 
-l33t Stopwatch tracks your leveling up or power up speed.
+l33t Stopwatch tracks your leveling up, power up, or campaign speed.
 
-Future versions will also track GQ, CP, and quest times.
+Future versions will also track GQ and quest times.
 
 Usage:
 

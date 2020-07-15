@@ -51,7 +51,7 @@
   <plugin>
     <name>l33t Stopwatch</name>
     <author>Ruhamah</author>
-    <description>Tracks your leveling up or power up speed.</description>
+    <description>Tracks your leveling up, power up, or campaign speed.</description>
     <id>1337200e0ba60e7ecbb9d220</id>
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_stopwatch-latest.zip</download>
     <installpath>0</installpath>
