@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2019-12-17 01:33:37"
    requires="5.06"
-   version="0.06"
+   version="0.07"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_stopwatch (v0.06) by Ruhamah (https://aard.l33t.xyz)
+l33t_stopwatch (v0.07) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Stopwatch tracks your leveling up or power up speed.
 
@@ -58,8 +58,22 @@ Usage:
    enabled="y"
    group="l33t"
    keep_evaluating="y"
-   match="You gain * hit points, * mana, * moves, * practices and * trains."
+   match="^You gain (?P<hit_points>\d+) hit points, (?P<mana>\d+) mana, (?P<moves>\d+) moves, (?P<practices>\d+) practices and (?P<trains>\d+) trains\.$"
    name="l33t_level_up"
+   regexp="y"
+   script="l33t_handle_level_up"
+   sequence="1"
+  >
+  </trigger>
+
+
+  <trigger
+   enabled="y"
+   group="l33t"
+   keep_evaluating="y"
+   match="^You gain (?P<hit_points>\d+) hit points, (?P<mana>\d+) mana, (?P<moves>\d+) moves, (?P<practices>\d+) practices, (?P<trains>\d+) trains and (?P<instinct_trains>\d+) instinct trains\.$"
+   name="l33t_level_up_t9_redo"
+   regexp="y"
    script="l33t_handle_level_up"
    sequence="1"
   >
