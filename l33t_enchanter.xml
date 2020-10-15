@@ -10,13 +10,13 @@
    purpose="l33t Enchanter batch enchants items in containers."
    save_state="y"
    date_written="2020-01-11 13:33:37"
-   requires="5.06"
-   version="0.06"
+   requires="4.76"
+   version="0.07"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_enchanter (v0.06) by Ruhamah (https://aard.l33t.xyz)
+l33t_enchanter (v0.07) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Enchanter casts enchants on items in your containers.
 

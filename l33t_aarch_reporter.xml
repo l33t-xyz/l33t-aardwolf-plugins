@@ -11,13 +11,13 @@
    purpose="Report which Aarchaeology item numbers you are missing"
    save_state="y"
    date_written="2019-12-16 01:33:37"
-   requires="5.06"
-   version="0.08"
+   requires="4.76"
+   version="0.09"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_aarch_reporter (v0.08) by Ruhamah (https://aard.l33t.xyz)
+l33t_aarch_reporter (v0.09) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Aarchaeology Report analyzes a container that you specify and
 generates a variety of reports.
@@ -690,6 +690,6 @@ loaded()
 
 
 ]]>
-</script> 
+</script>
 
 </muclient>

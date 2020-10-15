@@ -10,13 +10,13 @@
    purpose="Stopwatch tracks your leveling up, power up, and CP speeds."
    save_state="y"
    date_written="2019-12-17 01:33:37"
-   requires="5.06"
-   version="0.07"
+   requires="4.76"
+   version="0.08"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_stopwatch (v0.07) by Ruhamah (https://aard.l33t.xyz)
+l33t_stopwatch (v0.08) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Stopwatch tracks your leveling up, power up, or campaign speed.
 

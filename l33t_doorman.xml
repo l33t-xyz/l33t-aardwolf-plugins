@@ -10,13 +10,13 @@
    purpose="l33t Doorman opens doors for you!"
    save_state="y"
    date_written="2019-12-28 13:33:37"
-   requires="5.06"
-   version="0.02"
+   requires="4.76"
+   version="0.03"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_doorman (v0.02) by Ruhamah (https://aard.l33t.xyz)
+l33t_doorman (v0.03) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Doorman automagically opens closed doors for you.
 
@@ -251,7 +251,7 @@ function doorman_main(name, line, wildcards) {
                     world.Note('l33t Doorman opens ' + direction + '.');
                     world.Execute('open ' + direction);
                 }
-            }    
+            }
         }
     } else {
         // do nothing -- doorman is disabled or dismissed

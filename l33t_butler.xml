@@ -10,13 +10,13 @@
    purpose="l33t Butler keeps rooms tidy for you!"
    save_state="y"
    date_written="2020-05-03 13:33:37"
-   requires="5.06"
-   version="0.04"
+   requires="4.76"
+   version="0.05"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_butler (v0.04) by Ruhamah (https://aard.l33t.xyz)
+l33t_butler (v0.05) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Butler keeps rooms tidy for you!
 
@@ -115,7 +115,7 @@ and 'butler summon'.
    sequence="102"
   >
   </alias>
-      
+
   <alias
    enabled="y"
    group="l33t_butler"
@@ -257,7 +257,7 @@ function handleL33tLuaUtilsUpdate(text) {
 
 function safeSac(name, line, wildcards) {
     var itemId = world.GetAliasWildcard(name, 'item_id');
-               
+
     if (isItemDropAllowed(itemId)) {
         world.Send(line);
     } else {
