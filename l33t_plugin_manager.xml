@@ -9,7 +9,7 @@
    purpose="Manages updates for l33t.xyz plugins"
    date_written="2019-12-16 01:33:37"
    requires="4.76"
-   version="0.15"
+   version="0.16"
    save_state="y"
    >
 <description trim="y">
@@ -263,8 +263,14 @@ function buildL33tPayload(username, key)
 end
 
 
-function isPremiumUnlocked()
+function getToken()
    local token = GetVariable('L33T_PREMIUM_TOKEN')
+   return token
+end
+
+
+function isPremiumUnlocked()
+   local token = getToken()
    local isUnlocked = token and 1
    return isUnlocked
 end
@@ -414,7 +420,7 @@ function async_head_plugin(retval, page, status, headers, full_status, request_u
         end
 
         if isPremiumUnlocked() then
-            local token = GetVariable('L33T_PREMIUM_TOKEN')
+            local token = getToken()
             local modListUrl = L33T_PREMIUM_MOD_DOWNLOADS_URL .. '?token=' .. urllib.escape(token)
             print('****** l33t PREMIUM unlocked ******')
             Hyperlink(modListUrl, 'Click to Download l33t PREMIUM Aardwolf mods', 'Click to download l33t PREMIUM Aardwolf mods', 'yellowgreen', '', 1)

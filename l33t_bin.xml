@@ -16,7 +16,7 @@
    save_state="n"
    date_written="2020-05-16"
    requires="4.00"
-   version="0.01"
+   version="0.02"
    >
 
 <description trim="y">
@@ -40,6 +40,12 @@ Usage:
    lbin list
    > Lists out your previously created pastes
 
+   PREMIUM ONLY:
+
+   l33t bin login
+   lbin login
+   > Generates a login URL to allow you to view and edit your pastes
+
 ]]>
 </description>
 
@@ -52,6 +58,15 @@ Usage:
    match="^ *(lbin|l33t bin) *list *$"
    regexp="y"
    script="l33t_bin_list"
+   sequence="100"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   match="^ *(lbin|l33t bin) *login *$"
+   regexp="y"
+   script="l33t_bin_login"
    sequence="100"
   >
   </alias>
@@ -109,7 +124,9 @@ PLUGIN_URL = 'https://aard.l33t.xyz'
 
 local L33T_BIN_POST_URL = 'https://l33t.xyz/api/aardwolf/pastebin'
 local L33T_BIN_LIST_URL = 'https://l33t.xyz/api/aardwolf/pastebin/list'
+local L33T_BIN_LOGIN_URL = 'https://l33t.xyz/api/aardwolf/pastebin/login'
 
+local PLUGIN_ID_L33T_PLUGIN_MANAGER = 'baa6825f5a7dd47512795deb'
 local PLUGIN_ID_L33T_BIN = '1337b0721cd04ee582e2e1ca'
 local PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264'
 
@@ -172,6 +189,33 @@ function l33t_bin_list(name, line, wildcards)
 end
 
 
+function l33t_bin_login(name, line, wildcards)
+   local any, isUnlocked = CallPlugin(PLUGIN_ID_L33T_PLUGIN_MANAGER, 'isPremiumUnlocked')
+
+   if isUnlocked then
+      local any, token = CallPlugin(PLUGIN_ID_L33T_PLUGIN_MANAGER, 'getToken')
+
+      local url = L33T_BIN_LOGIN_URL
+      local http_mode = determineHttpMode(url)
+      local timeout_secs = 15
+      local timeout_callback = nil
+      local payload = json.encode({
+         ['token'] = token
+      })
+
+      async.doAsyncRemoteRequest(
+         url,
+         handle_login_response,
+         http_mode,
+         timeout_secs,
+         timeout_callback,
+         payload
+      )
+
+   end
+end
+
+
 function handle_list_response(retval, responseContent, status, headers, full_status, request_url)
     if tonumber(status) == 200 then
         local payload = json.decode(responseContent)
@@ -184,7 +228,29 @@ function handle_list_response(retval, responseContent, status, headers, full_sta
     else
         print('Failed to retrieve list of previous l33t bin pastes.')
     end
-end       
+end
+
+
+function handle_login_response(retval, responseContent, status,
+headers, full_status, request_url)
+   if tonumber(status) == 200 then
+      local payload = json.decode(responseContent)
+      print('Succesfully logged in to l33t bin!')
+      local url = payload.login_url
+      Hyperlink(
+         url,
+         'Click to continue to l33t bin (' .. url .. ')',
+         'Click to continue to l33t bin (' .. url .. ')',
+         'cornflowerblue',
+         '',
+         true
+      )
+      print('')
+   else
+      print('Failed to log in to l33t bin.')
+   end
+end
+
 
 -- Thank you, Shaun Biggs, for taking your time to write the CopyScript
 -- (formerly Copy2) function below. It was slightly altered by me to suit
