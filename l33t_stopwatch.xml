@@ -519,7 +519,7 @@ function getDurationString(duration)
         if string.len(durationString) > 0 then
             durationString = durationString .. ', '
         end
-        durationString = durationString .. seconds .. ' seconds'
+        durationString = durationString .. string.format('%.2f', seconds):gsub('0+$', ''):gsub("%.$","") .. ' seconds'
     end
 
     return durationString
