@@ -397,7 +397,7 @@ function l33t_stopwatch_powerup(name, line, wildcards)
         local msg = (
             '@BLast PUp @W: @C' .. durationString .. '@w'
             .. '. @BAverage@W: @C' .. averageDurationString .. '@w'
-            .. '  @BTrains@: @G' .. string.format('%.2f', averageTrains):gsub('0+$', ''):gsub("%.$","") .. '@w/PUp (@G' .. totalTrains .. '@w total)'
+            .. ' @BTrains@W: @G' .. string.format('%.2f', averageTrains):gsub('0+$', ''):gsub("%.$","") .. '@w/PUp (@G' .. totalTrains .. '@w total)'
             .. ' (over @C' .. totalPowerUpsGained .. '@w PUps).'
         )
 
