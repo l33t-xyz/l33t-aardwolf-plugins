@@ -386,16 +386,17 @@ function l33t_stopwatch_powerup(name, line, wildcards)
     else
         local lastPowerUpDuration = powerUpDurations[#powerUpDurations]
         local averageDuration = table.reduce(powerUpDurations, sum) / (totalPowerUpsGained - 1)
-        local averageTrains = table.reduce(powerUpTrains, sum) / totalPowerUpsGained
+        local totalTrains = table.reduce(powerUpTrains, sum)
+        local averageTrains =  totalTrains / totalPowerUpsGained
 
         local durationString = getDurationString(lastPowerUpDuration)
         local averageDurationString = getDurationString(averageDuration)
 
         local msg = (
-            '@BLast Power-Up Duration@W: @C' .. durationString .. '@w'
-            .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w'
-            .. '  @G' .. string.format('%.2f', averageTrains):gsub('0+$', ''):gsub("%.$","") .. '@w trains/power-up'
-            .. ' (over @C' .. totalPowerUpsGained .. '@w power-ups).'
+            '@BLast PUp @W: @C' .. durationString .. '@w'
+            .. '. @BAverage@W: @C' .. averageDurationString .. '@w'
+            .. '  @BTrains@: @G' .. string.format('%.2f', averageTrains):gsub('0+$', ''):gsub("%.$","") .. '@w/PUp (@G' .. totalTrains .. '@w total)'
+            .. ' (over @C' .. totalPowerUpsGained .. '@w PUps).'
         )
 
         local channel = GetVariable('stopwatch_channel') or 'say'
