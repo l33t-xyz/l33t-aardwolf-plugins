@@ -84,8 +84,8 @@ Usage:
    enabled="y"
    group="l33t"
    keep_evaluating="y"
-   lines_to_match="2"
-   match="^Congratulations\, hero\. You have increased your powers\!\nYou gain (\d+) trains\.$"
+   lines_to_match="3"
+   match="^Congratulations\, hero\. You have increased your powers\!\nYou gain (\d+) trains\.\n(Lucky\! You gain an extra (\d+) training sessions?\!|.*)\n"
    multi_line="y"
    name="l33t_power_up"
    regexp="y"
@@ -93,7 +93,6 @@ Usage:
    sequence="2"
   >
   </trigger>
-
 
   <trigger
    enabled="y"
@@ -249,6 +248,7 @@ local totalLevelsGained = 0
 
 local lastPowerUpTimestamp = nil
 local powerUpDurations = {}
+local powerUpTrains = {}
 local totalPowerUpsGained = 0
 
 local currentQuestStartTimestamp = nil
@@ -319,6 +319,8 @@ function l33t_handle_power_up(name, line, wildcards)
         table.insert(powerUpDurations, duration)
     end
 
+    table.insert(powerUpTrains, tonumber(wildcards[1]) + (tonumber(wildcards[3]) or 0))
+
     lastPowerUpTimestamp = timestamp
 
     l33t_stopwatch_powerup()
@@ -384,6 +386,7 @@ function l33t_stopwatch_powerup(name, line, wildcards)
     else
         local lastPowerUpDuration = powerUpDurations[#powerUpDurations]
         local averageDuration = table.reduce(powerUpDurations, sum) / (totalPowerUpsGained - 1)
+        local averageTrains = table.reduce(powerUpTrains, sum) / totalPowerUpsGained
 
         local durationString = getDurationString(lastPowerUpDuration)
         local averageDurationString = getDurationString(averageDuration)
@@ -391,6 +394,7 @@ function l33t_stopwatch_powerup(name, line, wildcards)
         local msg = (
             '@BLast Power-Up Duration@W: @C' .. durationString .. '@w'
             .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w'
+            .. '  @G' .. string.format('%.2f', averageTrains):gsub('0+$', ''):gsub("%.$","") .. '@w trains/power-up'
             .. ' (over @C' .. totalPowerUpsGained .. '@w power-ups).'
         )
 
@@ -447,6 +451,7 @@ function resetState(resetMode)
     if (resetMode == 'all' or resetMode == 'pup') then
         lastPowerUpTimestamp = nil
         powerUpDurations = {}
+        powerUpTrains = {}
         totalPowerUpsGained = 0
     end
 
