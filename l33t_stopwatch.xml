@@ -423,8 +423,8 @@ function l33t_stopwatch_campaign(name, line, wildcards)
         local averageDurationString = getDurationString(averageDuration)
 
         local msg = (
-            '@BLast Campaign Duration@W: @C' .. durationString .. '@w (' .. lastCampaignNumTargets .. ' targets @@ ' .. kpm .. ' kpm)'
-            .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w (Avg: ' .. averageNumTargets .. ' targets @@ ' .. averageKpm .. ' kpm)'
+            '@BLast Campaign Duration@W: @C' .. durationString .. '@w (' .. lastCampaignNumTargets .. ' targets @@ ' .. string.format('%.2f', kpm):gsub('0+$', ''):gsub("%.$","") .. ' kpm)'
+            .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w (Avg: ' .. string.format('%.2f', averageNumTargets):gsub('0+$', ''):gsub("%.$","") .. ' targets @@ ' .. string.format('%.2f', averageKpm):gsub('0+$', ''):gsub("%.$","") .. ' kpm)'
             .. ' (over @C' .. totalCampaignsCompleted .. '@w campaigns).'
         )
 
