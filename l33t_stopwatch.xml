@@ -84,8 +84,8 @@ Usage:
    enabled="y"
    group="l33t"
    keep_evaluating="y"
-   lines_to_match="2"
-   match="^Congratulations\, hero\. You have increased your powers\!\nYou gain (\d+) trains\.$"
+   lines_to_match="4"
+   match="^Congratulations\, hero\. You have increased your powers\!\nYou gain (?P<trains>\d+) trains\.\n((Lucky\! You gain an extra (?P<luckytrains>\d+) training sessions?\!|You gain (?P<dailytrains1>\d+) extra trains? daily blessing bonus\.)|.*)\n(You gain (?P<dailytrains2>\d+) extra trains? daily blessing bonus\.|.*)\n\Z"
    multi_line="y"
    name="l33t_power_up"
    regexp="y"
@@ -93,7 +93,6 @@ Usage:
    sequence="2"
   >
   </trigger>
-
 
   <trigger
    enabled="y"
@@ -249,6 +248,7 @@ local totalLevelsGained = 0
 
 local lastPowerUpTimestamp = nil
 local powerUpDurations = {}
+local powerUpTrains = {}
 local totalPowerUpsGained = 0
 
 local currentQuestStartTimestamp = nil
@@ -319,6 +319,10 @@ function l33t_handle_power_up(name, line, wildcards)
         table.insert(powerUpDurations, duration)
     end
 
+    local trains = tonumber(wildcards.trains) + (tonumber(wildcards.luckytrains) or 0)
+                   + (tonumber(wildcards.dailytrains1) or 0) + (tonumber(wildcards.dailytrains2) or 0)
+    table.insert(powerUpTrains, trains)
+
     lastPowerUpTimestamp = timestamp
 
     l33t_stopwatch_powerup()
@@ -384,14 +388,17 @@ function l33t_stopwatch_powerup(name, line, wildcards)
     else
         local lastPowerUpDuration = powerUpDurations[#powerUpDurations]
         local averageDuration = table.reduce(powerUpDurations, sum) / (totalPowerUpsGained - 1)
+        local totalTrains = table.reduce(powerUpTrains, sum)
+        local averageTrains =  totalTrains / totalPowerUpsGained
 
         local durationString = getDurationString(lastPowerUpDuration)
         local averageDurationString = getDurationString(averageDuration)
 
         local msg = (
-            '@BLast Power-Up Duration@W: @C' .. durationString .. '@w'
-            .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w'
-            .. ' (over @C' .. totalPowerUpsGained .. '@w power-ups).'
+            '@BLast PUp @W: @C' .. durationString .. '@w'
+            .. '. @BAverage@W: @C' .. averageDurationString .. '@w'
+            .. ' @BTrains@W: @G' .. string.format('%.2f', averageTrains):gsub('0+$', ''):gsub("%.$","") .. '@w/PUp (@G' .. totalTrains .. '@w total)'
+            .. ' (over @C' .. totalPowerUpsGained .. '@w PUps).'
         )
 
         local channel = GetVariable('stopwatch_channel') or 'say'
@@ -416,8 +423,8 @@ function l33t_stopwatch_campaign(name, line, wildcards)
         local averageDurationString = getDurationString(averageDuration)
 
         local msg = (
-            '@BLast Campaign Duration@W: @C' .. durationString .. '@w (' .. lastCampaignNumTargets .. ' targets @@ ' .. kpm .. ' kpm)'
-            .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w (Avg: ' .. averageNumTargets .. ' targets @@ ' .. averageKpm .. ' kpm)'
+            '@BLast Campaign Duration@W: @C' .. durationString .. '@w (' .. lastCampaignNumTargets .. ' targets @@ ' .. string.format('%.2f', kpm):gsub('0+$', ''):gsub("%.$","") .. ' kpm)'
+            .. '. @BAverage Duration@W: @C' .. averageDurationString .. '@w (Avg: ' .. string.format('%.2f', averageNumTargets):gsub('0+$', ''):gsub("%.$","") .. ' targets @@ ' .. string.format('%.2f', averageKpm):gsub('0+$', ''):gsub("%.$","") .. ' kpm)'
             .. ' (over @C' .. totalCampaignsCompleted .. '@w campaigns).'
         )
 
@@ -447,6 +454,7 @@ function resetState(resetMode)
     if (resetMode == 'all' or resetMode == 'pup') then
         lastPowerUpTimestamp = nil
         powerUpDurations = {}
+        powerUpTrains = {}
         totalPowerUpsGained = 0
     end
 
@@ -519,7 +527,7 @@ function getDurationString(duration)
         if string.len(durationString) > 0 then
             durationString = durationString .. ', '
         end
-        durationString = durationString .. seconds .. ' seconds'
+        durationString = durationString .. string.format('%.2f', seconds):gsub('0+$', ''):gsub("%.$","") .. ' seconds'
     end
 
     return durationString
