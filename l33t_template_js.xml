@@ -104,6 +104,25 @@ var PLUGIN_ID_L33T_LUA_UTILS = '13376f198e8f442baa0be9a6';
 // Script Locals
 
 
+var currentRoomId = null;
+var currentRoomName = null;
+var currentZone = null;
+
+
+function handleGMCP(text) {
+}
+
+
+function handleL33tLuaUtilsUpdate(text) {
+    if (text === 'room.updated') {
+        currentRoomId = GetPluginVariable(PLUGIN_ID_L33T_LUA_UTILS, 'currentRoomId');
+        currentRoomName = GetPluginVariable(PLUGIN_ID_L33T_LUA_UTILS, 'currentRoomName');
+        currentZone = GetPluginVariable(PLUGIN_ID_L33T_LUA_UTILS, 'currentZone');
+        //world.Note('Room updated - [' + currentRoomName + '] (' + currentRoomId + ') [' + currentZone + ']');
+    }
+}
+
+
 // Core Functions
 
 
@@ -154,7 +173,7 @@ function OnPluginBroadcast(msg, id, name, text) {
     if (id == PLUGIN_ID_GMCP_HANDLER) {
         //handleGMCP(text)
     } else if (id == PLUGIN_ID_L33T_LUA_UTILS) {
-        // placeholder
+        handleL33tLuaUtilsUpdate(text);
     } else {
         // do nothing, unrecognized plugin
     }
