@@ -87,7 +87,7 @@
     <description>Allows use of a fake tracker channel, along with history.</description>
     <id>9a386e25e87cd9ed2311c961</id>
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/vendor/Aardwolf_Fake_Tracker_Channel-latest.zip</download>
-    <installpath>vendor/</installpath>
+    <installpath>vendor</installpath>
   </plugin>
   <plugin>
     <name>Mendaloth's Aardwolf Instinct/Mastery Reporter</name>
@@ -95,7 +95,7 @@
     <description>Reports your instinct and mastery to room or a channel.</description>
     <id>9a386e25e87cd9ed2311c961</id>
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/vendor/Aardwolf_Instinct_Mastery_Reporter-latest.zip</download>
-    <installpath>vendor/</installpath>
+    <installpath>vendor</installpath>
   </plugin>
 
   <plugin>
@@ -104,7 +104,7 @@
     <id>56e7e7121bf320c3510ee2e0</id>
     <description>Lets you add friends/clan members to a list to auto-invite them to party when they login. Also lets group members use commands via tell/group messages to invite themselves or others.</description>
     <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/vendor/inviter-latest.zip</download>
-    <installpath>vendor/</installpath>
+    <installpath>vendor</installpath>
   </plugin>
 
 </pluginsListing>
