@@ -49,6 +49,14 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
+    <name>l33t Room Announcer</name>
+    <author>Ruhamah</author>
+    <description>l33t Room Announcer sets custom announcements when entering rooms.</description>
+    <id>1337675b9ab01c00444c978c</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_room_announcer-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+  <plugin>
     <name>l33t Stopwatch</name>
     <author>Ruhamah</author>
     <description>Tracks your leveling up, power up, or campaign speed.</description>
