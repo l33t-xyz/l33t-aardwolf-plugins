@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_room_announcer"
+   author="Ruhamah"
+   id="1337675b9ab01c00444c978c"
+   language="Lua"
+   purpose="l33t Room Announcer sets custom announcements when entering rooms."
+   save_state="y"
+   date_written="2023-03-10 01:33:37"
+   requires="4.76"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_room_announcer (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Room Announcer easily sets custom announcements to various
+channels when entering rooms.
+
+Useful for epic runs, pup-trains, clan raiding and defense, and more!
+
+Usage:
+
+  lra [help]                     - Displays help
+
+  lra here                       - Displays custom announcer settings
+                                   for the current room
+
+  lra clear                      - Removes custom announcer in current
+                                   room
+
+  lra mute                       - Temporarily mutes announcements
+  lra unmute                     - Unmutes room announcements
+
+  lra channel <channel>          - Sets the channel for general room
+                                   announcements
+
+  lra room channel <channel>     - Sets a specific channel to use
+                                   for custom announcements
+                                   upon entering this room
+
+  lra message <message>          - Sets a custom message to be
+                                   announced upon entering this room
+
+Notes:
+
+l33t Room Announcer works GREAT with other l33t Plugins, including
+l33t Utils (JS and Lua utils).
+
+Recommend setting with 'roomlimit 1 <channel>'  to prevent multiple
+messages firing when the 'look' command is sent:
+
+  lra channel roomlimit 1 gt
+
+To implement an Icefall slopes pup announcer, recommended settings are:
+
+- In Scraping the Pinnacle of Icefall (Icefall) (38813):
+
+  lra message @C*~*~* @YSLOPES @C*~*~*
+
+- In King of the Kill (Icefall) (38839):
+
+  lra message @W<<<<<< @YWEST @W<<<<<<
+
+- In Chutes and Empty Bladders (Icefall) (38825):
+
+  lra message @Wvvvvvv @YSOUTH @Wvvvvvv
+
+- In Iced Fish Hatchery (Icefall) (38814):
+
+  lra message @W>>>>>> @YEAST @W>>>>>>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra +here *$"
+   regexp="y"
+   script="lra_here"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra +clear *$"
+   script="lra_clear"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra +mute *$"
+   script="lra_mute"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra +unmute *$"
+   script="lra_unmute"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra +channel *$"
+   script="lra_channel_check"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra +channel +(?P<channel>.+)$"
+   script="lra_channel"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra +room +channel +(?P<channel>.+)$"
+   script="lra_room_channel"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra +message +(?P<message>.+)$"
+   script="lra_message"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra ?(.*)$"
+   script="OnHelp"
+   regexp="y"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t"
+   keep_evaluating="n"
+   match="^ *lra +help *$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+</aliases>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+-- See: https://github.com/fiendish/aardwolfclientpackage/wiki/Using-GMCP
+require "gmcphelper" -- adds the gmcp() function for simplifying data access
+
+
+-- Globals
+
+
+PLUGIN_ID = GetPluginID()
+PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
+PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
+PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
+PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
+PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
+PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
+
+PLUGIN_URL = 'https://aard.l33t.xyz'
+
+-- Other plugins
+PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264'
+PLUGIN_ID_DINV = '88c86ea252fc1918556df9fe'
+PLUGIN_ID_L33T_LUA_UTILS = '13376f198e8f442baa0be9a6'
+
+
+-- Script Locals
+
+
+local currentRoomInfo = nil
+local isMuted = false
+
+
+function handleGMCP(text)
+    --[[
+    Room Format:
+
+    {
+        ['details'] = 'safe',
+        ['name'] = 'The Grand City of Aylor',
+        ['num'] = '32418',
+        ['exits'] = {
+            ['s'] = '32419',
+            ['u'] = '35200',
+            ['d'] = '32615',
+            ['w'] = '30518',
+            ['n'] = '32539',
+            ['e'] = '32698'
+        },
+        ['terrain'] = 'aylorcity',
+        ['coord'] = {
+            ['y'] = '20',
+            ['x'] = '30',
+            ['cont'] = '0',
+            ['id'] = '0'
+        },
+        ['outside'] = '0',
+        ['zone'] = 'aylor'
+    }
+
+--]]
+
+    if text == 'room.info' then
+        local roomInfo = gmcp('room.info')
+        if roomInfo ~= nil then
+            currentRoomInfo = roomInfo
+
+            lraAnnounce()
+        end
+    end
+end
+
+
+-- Extensions
+
+
+table.reduce = function (list, fn)
+    local acc
+    for k, v in ipairs(list) do
+        if 1 == k then
+            acc = v
+        else
+            acc = fn(acc, v)
+        end
+    end
+    return acc
+end
+
+
+function sum(a, b)
+    return a + b
+end
+
+
+-- State Functions
+
+
+function build_current_room_name_and_num()
+    local roomNameAndNum = nil
+    if currentRoomInfo ~= nil then
+        roomNameAndNum = currentRoomInfo.name .. ' (' .. currentRoomInfo.num .. ')'
+    end
+
+    return roomNameAndNum
+end
+
+
+function build_lra_muted_varname()
+    return 'lra_muted'
+end
+
+
+function build_lra_channel_varname()
+    return 'lra_channel'
+end
+
+
+function build_lra_room_channel_varname()
+    return 'lra_' .. currentRoomInfo.num .. '_channel'
+end
+
+
+function build_lra_room_message_varname()
+    return 'lra_' .. currentRoomInfo.num .. '_message'
+end
+
+
+function get_lra_channel()
+    local channel = GetVariable(build_lra_room_channel_varname()) or GetVariable(build_lra_channel_varname()) or 'say'
+    return channel
+end
+
+
+function get_lra_message()
+    local message = GetVariable(build_lra_room_message_varname())
+    return message
+end
+
+
+function missingRoomError()
+    Note('No current room data available. Try looking or moving first.')
+end
+
+
+-- Core Functions
+
+
+function lraAnnounce()
+    -- announces if both a channel and a message are set
+    local channel = get_lra_channel()
+    local message = get_lra_message()
+
+    if not isMuted and channel ~= nil and message ~= nil then
+        Execute(channel .. ' ' .. message)
+    end
+end
+
+
+
+function lra_here(name, line, wildcards)
+    if currentRoomInfo == nil then
+        missingRoomError()
+        return
+    end
+
+    local channel = GetVariable(build_lra_channel_varname())
+    local roomChannel = GetVariable(build_lra_room_channel_varname())
+    local message = get_lra_message() or ''
+
+    Note('l33t Room Announcer for current room [' .. build_current_room_name_and_num() ..'] is set to:')
+    if roomChannel then
+        Note('Room Channel: [' .. roomChannel .. '] (overrides global channel)')
+    else
+        Note('Channel: [' .. channel .. ']')
+        Note('Message: [' .. message .. ']')
+    end
+end
+
+
+function lra_clear(name, line, wildcards)
+    if currentRoomInfo == nil then
+        missingRoomError()
+        return
+    end
+
+    DeleteVariable(build_lra_room_channel_varname())
+    DeleteVariable(build_lra_room_message_varname())
+    Note('l33t Room Announcer cleared for room [' .. build_current_room_name_and_num() .. ']')
+end
+
+
+function lra_mute(name, line, wildcards)
+    isMuted = true
+    Note('l33t Room Announcer - MUTED')
+end
+
+
+function lra_unmute(name, line, wildcards)
+    isMuted = false
+    Note('l33t Room Announcer - UNMUTED')
+end
+
+
+function lra_channel_check(name, line, wildcards)
+    local channel = GetVariable(build_lra_channel_varname()) or ''
+
+    print('l33t Room Announcer channel is currently set to [' .. channel .. ']')
+end
+
+
+function lra_channel(name, line, wildcards)
+    local channel = wildcards.channel
+
+    SetVariable(build_lra_channel_varname(), channel)
+
+    print('l33t Room Announcer channel set to [' .. channel .. ']')
+end
+
+
+function lra_room_channel(name, line, wildcards)
+    if currentRoomInfo == nil then
+        missingRoomError()
+        return
+    end
+
+    local channel = wildcards.channel
+
+    SetVariable(build_lra_room_channel_varname(), channel)
+
+    print('l33t Room Announcer channel for room [' .. build_current_room_name_and_num() .. '] set to [' .. channel .. ']')
+end
+
+
+function lra_message(name, line, wildcards)
+    if currentRoomInfo == nil then
+        missingRoomError()
+        return
+    end
+
+    local message = wildcards.message
+
+    SetVariable(build_lra_room_message_varname(), message)
+
+    print('l33t Room Announcer message for room [' .. build_current_room_name_and_num() .. '] set to [' .. message .. ']')
+end
+
+
+-- Help
+
+
+function OnHelp (sName, sLine, wildcards)
+    Note(GetPluginInfo(GetPluginID(), 3))
+end
+
+
+-- Plugin Lifecycle
+
+
+function OnPluginInstall()
+    printSeparator()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' .. PLUGIN_NAME
+            .. ' (v' .. PLUGIN_VERSION .. ')'
+            .. ' by ' .. PLUGIN_AUTHOR
+            .. ' ('
+        )
+    )
+    printPluginLink()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            .. 'Loaded '
+            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+            .. PLUGIN_NUM_ALIASES .. ' aliases, '
+            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'lra help',
+        'CornFlowerBlue', '', '".\n'
+    )
+    printSeparator()
+
+
+    if GetVariable(build_lra_muted_varname())  == 'true' then
+        lra_mute()
+    else
+        lra_unmute()
+    end
+
+end
+
+
+function OnPluginSaveState()
+    value = isMuted and 'true' or 'false'
+    SetVariable(build_lra_muted_varname(), value)
+end
+
+
+function OnPluginBroadcast(msg, id, name, text)
+    if id == PLUGIN_ID_GMCP_HANDLER then
+        handleGMCP(text)
+    elseif id == PLUGIN_ID_L33T_LUA_UTILS then
+        -- placeholder
+    else
+        -- do nothing, unrecognized plugin
+    end
+end
+
+
+-- Util Functions
+
+
+function printSeparator()
+    ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
+end
+
+
+function printPluginLink()
+    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+end
+
+
+function getDurationString(duration)
+    local seconds = duration
+    local hours = math.floor(seconds / 3600)
+    seconds = seconds - (hours * 3600)
+    local minutes = math.floor(seconds / 60)
+    seconds = seconds - (minutes * 60)
+
+    local durationString = ''
+    if hours > 0 then
+        durationString = durationString .. hours .. ' hours'
+    end
+
+    if minutes > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. minutes .. ' minutes'
+    end
+
+    if seconds > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. seconds .. ' seconds'
+    end
+
+    return durationString
+end
+
+
+]]>
+</script>
+
+
+</muclient>
