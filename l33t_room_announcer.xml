@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2023-03-10 01:33:37"
    requires="4.76"
-   version="0.01"
+   version="0.02"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_room_announcer (v0.01) by Ruhamah (https://aard.l33t.xyz)
+l33t_room_announcer (v0.02) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Room Announcer easily sets custom announcements to various
 channels when entering rooms.
@@ -62,7 +62,7 @@ To implement an Icefall slopes pup announcer, recommended settings are:
 
   lra message @C*~*~* @YSLOPES @C*~*~*
 
-- In King of the Kill (Icefall) (38839):
+- In King of the Kill (Icefall) (38836):
 
   lra message @W<<<<<< @YWEST @W<<<<<<
 
