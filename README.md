@@ -15,6 +15,7 @@
 - **l33t Bin** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_bin-latest.zip); [live demo](https://l33t.xyz/aardbin/random)) - Shares selected text to l33t bin (similar to mudbin, pastebin, hastebin).
 - **l33t Butler** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_butler.xml)) - l33t Butler keeps rooms tidy for you!
 - **l33t Doorman** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_doorman.xml)) - l33t Doorman opens doors for you!
+- **l33t Room Announcer** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_room_announcer.xml)) - l33t Room Announcer sets custom announcements when entering rooms.
 - **l33t Stopwatch** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_stopwatch.xml)) - Tracks your leveling up or power up speed.
 - **l33t Lua Utils** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_utils_lua.xml)) - l33t Lua utils. A dependency of other l33t plugins. Handles GMCP and broadcasts metadata.
 - **l33t Utils (JScript)** ([download](https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/l33t_utils_js.xml)) - Various l33t convenience utilities.
