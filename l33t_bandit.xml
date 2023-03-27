@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_bandit"
+   author="Ruhamah"
+   id="1337b78c31176c2b4d9d9f97"
+   language="Lua"
+   purpose="l33t Bandit tracks fence values and shady thievery things."
+   save_state="y"
+   date_written="2023-03-27 01:33:37"
+   requires="4.76"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_bandit (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Bandit tracks fence values and shady thievery things
+
+Usage:
+
+  lbandit [help]                 - Displays help
+
+  lbandit report                 - Displays fence report
+
+  lbandit reset fence            - Resets fence report counter
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+
+  <trigger
+   enabled="y"
+   group="l33t_bandit"
+   keep_evaluating="y"
+   match="^You fenced (?P<numItems>\d+) items? for (?P<amountGold>.+) gold.$"
+   name="lbandit_fence_update"
+   regexp="y"
+   sequence="20"
+   script="lbandit_fence_update"
+  >
+  </trigger>
+
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+
+  <alias
+   enabled="y"
+   group="l33t_bandit"
+   keep_evaluating="n"
+   match="^ *lbandit +report *$"
+   script="lbandit_report"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t_bandit"
+   keep_evaluating="n"
+   match="^ *lbandit +reset +fence *$"
+   script="lbandit_reset_fence"
+   regexp="y"
+   sequence="100"
+  >
+  </alias>
+
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t_bandit"
+   keep_evaluating="n"
+   match="^ *lbandit ?(.*)$"
+   script="OnHelp"
+   regexp="y"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_bandit"
+   keep_evaluating="n"
+   match="^ *lbandit +help *$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+</aliases>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+-- See: https://github.com/fiendish/aardwolfclientpackage/wiki/Using-GMCP
+require "gmcphelper" -- adds the gmcp() function for simplifying data access
+
+
+-- Globals
+
+
+PLUGIN_ID = GetPluginID()
+PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
+PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
+PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
+PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
+PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
+PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
+
+PLUGIN_URL = 'https://aard.l33t.xyz'
+
+-- Other plugins
+PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264'
+PLUGIN_ID_DINV = '88c86ea252fc1918556df9fe'
+PLUGIN_ID_L33T_LUA_UTILS = '13376f198e8f442baa0be9a6'
+
+
+-- Script Locals
+
+
+local currentRoomInfo = nil
+local fencedItemsCount = 0
+local fencedValueTotal = 0
+
+
+function handleGMCP(text)
+    --[[
+    Room Format:
+
+    {
+        ['details'] = 'safe',
+        ['name'] = 'The Grand City of Aylor',
+        ['num'] = '32418',
+        ['exits'] = {
+            ['s'] = '32419',
+            ['u'] = '35200',
+            ['d'] = '32615',
+            ['w'] = '30518',
+            ['n'] = '32539',
+            ['e'] = '32698'
+        },
+        ['terrain'] = 'aylorcity',
+        ['coord'] = {
+            ['y'] = '20',
+            ['x'] = '30',
+            ['cont'] = '0',
+            ['id'] = '0'
+        },
+        ['outside'] = '0',
+        ['zone'] = 'aylor'
+    }
+
+--]]
+
+    if text == 'room.info' then
+        local roomInfo = gmcp('room.info')
+        if roomInfo ~= nil then
+            currentRoomInfo = roomInfo
+        end
+    end
+end
+
+
+-- Functions
+
+
+function lbandit_fence_update(name, line, wildcards)
+    local numItems = tonumber(wildcards.numItems, 10)
+    local amountGold = tonumber((wildcards.amountGold):gsub(',', ''), 10)
+
+    fencedItemsCount =  fencedItemsCount + numItems
+    fencedValueTotal = fencedValueTotal + amountGold
+end
+
+
+function lbandit_report()
+    local averageAmount = fencedValueTotal / fencedItemsCount
+
+    Note('Fenced a total of ' .. fencedItemsCount .. ' items for ' .. fencedValueTotal .. ' gold (Avg: ' .. averageAmount ..' gold/item).')
+end
+
+
+function lbandit_reset_fence()
+    fencedItemsCount = 0
+    fencedValueTotal = 0
+end
+
+
+-- Extensions
+
+
+table.reduce = function (list, fn)
+    local acc
+    for k, v in ipairs(list) do
+        if 1 == k then
+            acc = v
+        else
+            acc = fn(acc, v)
+        end
+    end
+    return acc
+end
+
+
+function sum(a, b)
+    return a + b
+end
+
+
+-- Core Functions
+
+
+-- Help
+
+
+function OnHelp (sName, sLine, wildcards)
+    Note(GetPluginInfo(GetPluginID(), 3))
+end
+
+
+-- Plugin Lifecycle
+
+
+function OnPluginInstall()
+    printSeparator()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' .. PLUGIN_NAME
+            .. ' (v' .. PLUGIN_VERSION .. ')'
+            .. ' by ' .. PLUGIN_AUTHOR
+            .. ' ('
+        )
+    )
+    printPluginLink()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            .. 'Loaded '
+            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+            .. PLUGIN_NUM_ALIASES .. ' aliases, '
+            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'lbandit help',
+        'CornFlowerBlue', '', '".\n'
+    )
+    printSeparator()
+end
+
+
+function OnPluginSaveState()
+end
+
+
+function OnPluginBroadcast(msg, id, name, text)
+    if id == PLUGIN_ID_GMCP_HANDLER then
+        handleGMCP(text)
+    elseif id == PLUGIN_ID_L33T_LUA_UTILS then
+        -- placeholder
+    else
+        -- do nothing, unrecognized plugin
+    end
+end
+
+
+-- Util Functions
+
+
+function printSeparator()
+    ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
+end
+
+
+function printPluginLink()
+    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+end
+
+
+function getDurationString(duration)
+    local seconds = duration
+    local hours = math.floor(seconds / 3600)
+    seconds = seconds - (hours * 3600)
+    local minutes = math.floor(seconds / 60)
+    seconds = seconds - (minutes * 60)
+
+    local durationString = ''
+    if hours > 0 then
+        durationString = durationString .. hours .. ' hours'
+    end
+
+    if minutes > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. minutes .. ' minutes'
+    end
+
+    if seconds > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. seconds .. ' seconds'
+    end
+
+    return durationString
+end
+
+
+]]>
+</script>
+
+
+</muclient>

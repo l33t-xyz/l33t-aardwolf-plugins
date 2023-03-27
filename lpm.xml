@@ -9,6 +9,14 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
+    <name>l33t Bandit</name>
+    <author>Ruhamah</author>
+    <description>l33t Bandit tracks fence values and shady thievery things.</description>
+    <id>1337b78c31176c2b4d9d9f97</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_bandit-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+  <plugin>
     <name>l33t Beacons</name>
     <author>Ruhamah</author>
     <description>Saves rooms to keywords to enable fast recall using those keywords.</description>
