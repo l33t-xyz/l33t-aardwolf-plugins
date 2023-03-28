@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2023-03-27 01:33:37"
    requires="4.76"
-   version="0.01"
+   version="0.02"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_bandit (v0.01) by Ruhamah (https://aard.l33t.xyz)
+l33t_bandit (v0.02) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Bandit tracks fence values and shady thievery things
 
@@ -173,12 +173,12 @@ function handleGMCP(text)
 
 --]]
 
-    if text == 'room.info' then
-        local roomInfo = gmcp('room.info')
-        if roomInfo ~= nil then
-            currentRoomInfo = roomInfo
-        end
-    end
+    -- if text == 'room.info' then
+    --     local roomInfo = gmcp('room.info')
+    --     if roomInfo ~= nil then
+    --         currentRoomInfo = roomInfo
+    --     end
+    -- end
 end
 
 
@@ -299,37 +299,6 @@ end
 function printPluginLink()
     Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
 end
-
-
-function getDurationString(duration)
-    local seconds = duration
-    local hours = math.floor(seconds / 3600)
-    seconds = seconds - (hours * 3600)
-    local minutes = math.floor(seconds / 60)
-    seconds = seconds - (minutes * 60)
-
-    local durationString = ''
-    if hours > 0 then
-        durationString = durationString .. hours .. ' hours'
-    end
-
-    if minutes > 0 then
-        if string.len(durationString) > 0 then
-            durationString = durationString .. ', '
-        end
-        durationString = durationString .. minutes .. ' minutes'
-    end
-
-    if seconds > 0 then
-        if string.len(durationString) > 0 then
-            durationString = durationString .. ', '
-        end
-        durationString = durationString .. seconds .. ' seconds'
-    end
-
-    return durationString
-end
-
 
 ]]>
 </script>
