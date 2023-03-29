@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2023-03-27 01:33:37"
    requires="4.76"
-   version="0.03"
+   version="0.04"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_bandit (v0.03) by Ruhamah (https://aard.l33t.xyz)
+l33t_bandit (v0.04) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Bandit tracks fence values and shady thievery things
 
@@ -199,8 +199,8 @@ function lbandit_report()
 
     local msg = (
         'Fenced a total of '
-        .. comma_format(fencedItemsCount, 2) .. ' items for '
-        .. comma_format(fencedValueTotal, 2) .. ' gold (Avg: '
+        .. comma_format(fencedItemsCount, 0) .. ' items for '
+        .. comma_format(fencedValueTotal, 0) .. ' gold (Avg: '
         .. comma_format(averageAmount, 2) ..' gold/item).'
     )
     Note(msg)
