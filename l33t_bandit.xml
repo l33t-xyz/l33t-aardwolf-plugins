@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2023-03-27 01:33:37"
    requires="4.76"
-   version="0.02"
+   version="0.03"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_bandit (v0.02) by Ruhamah (https://aard.l33t.xyz)
+l33t_bandit (v0.03) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Bandit tracks fence values and shady thievery things
 
@@ -197,13 +197,37 @@ end
 function lbandit_report()
     local averageAmount = fencedValueTotal / fencedItemsCount
 
-    Note('Fenced a total of ' .. fencedItemsCount .. ' items for ' .. fencedValueTotal .. ' gold (Avg: ' .. averageAmount ..' gold/item).')
+    local msg = (
+        'Fenced a total of '
+        .. comma_format(fencedItemsCount, 2) .. ' items for '
+        .. comma_format(fencedValueTotal, 2) .. ' gold (Avg: '
+        .. comma_format(averageAmount, 2) ..' gold/item).'
+    )
+    Note(msg)
 end
 
 
 function lbandit_reset_fence()
     fencedItemsCount = 0
     fencedValueTotal = 0
+end
+
+-- Utils
+
+
+function comma_format(number, precision)
+    if precision ~= nil and precision > 0 then
+        number = string.format('%.' .. precision .. 'f', number)
+    end
+
+    local i, j, minus, int, fraction = tostring(number):find('([-]?)(%d+)([.]?%d*)')
+
+    -- reverse the int-string and append a comma to all blocks of 3 digits
+    int = int:reverse():gsub("(%d%d%d)", "%1,")
+
+    -- reverse the int-string back remove an optional comma and put the
+    -- optional minus and fractional part back
+    return minus .. int:reverse():gsub("^,", "") .. fraction
 end
 
 
