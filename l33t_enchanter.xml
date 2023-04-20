@@ -11,12 +11,12 @@
    save_state="y"
    date_written="2020-01-11 13:33:37"
    requires="4.76"
-   version="0.07"
+   version="0.08"
    >
 <description trim="y">
 <![CDATA[
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-l33t_enchanter (v0.07) by Ruhamah (https://aard.l33t.xyz)
+l33t_enchanter (v0.08) by Ruhamah (https://aard.l33t.xyz)
 
 l33t Enchanter casts enchants on items in your containers.
 
@@ -49,9 +49,9 @@ Usage:
     Recommend using with 'dinv refresh eager 20'
 
 NOTE:
-In order to not spam the server, the limit is 10 items enchanted per run.
-
 The plugin is in full compliance with Aardwolf rules, see 'help enchantbot'.
+
+The hard limit is 20 items enchanted per run.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ]]>
@@ -181,7 +181,7 @@ PLUGIN_ID_DINV = '88c86ea252fc1918556df9fe'
 -- Script Locals
 
 
-local ENCHANT_LIMIT = 10
+local ENCHANT_LIMIT = 20
 
 local currentRoomInfo = nil
 local currentContainerId = nil
@@ -420,6 +420,7 @@ function enchantOneItem(itemId)
         SendNoEcho('get ' .. itemId .. ' ' .. currentContainerId)
     end
     SendNoEcho('c ' .. currentEnchantType .. ' ' .. itemId)
+    SendNoEcho('id ' .. itemId)
     if currentContainerId ~= 'inventory' then
         SendNoEcho('put ' .. itemId .. ' ' .. currentContainerId)
     end
