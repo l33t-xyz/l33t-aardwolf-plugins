@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2019-12-17 01:33:37"
    requires="4.76"
-   version="0.09"
+   version="0.10"
    >
 <description trim="y">
 <![CDATA[
@@ -87,12 +87,28 @@ Usage:
    lines_to_match="4"
    match="^Congratulations\, hero\. You have increased your powers\!\nYou gain (?P<trains>\d+) trains\.\n((Lucky\! You gain an extra (?P<luckytrains>\d+) training sessions?\!|You gain (?P<dailytrains1>\d+) extra trains? daily blessing bonus\.)|.*)\n(You gain (?P<dailytrains2>\d+) extra trains? daily blessing bonus\.|.*)\n\Z"
    multi_line="y"
+   name="l33t_power_up_old"
+   regexp="y"
+   script="l33t_handle_power_up"
+   sequence="2"
+  >
+  </trigger>
+
+
+  <trigger
+   enabled="y"
+   group="l33t"
+   keep_evaluating="y"
+   lines_to_match="4"
+   match="^Congratulations, (?P<player>[A-Za-z]+)\. You have increased your powerups to (?P<powerups>\d+)\.\nYou gain (?P<trains>\d+) trains\.\n((Lucky\! You gain an extra (?P<luckytrains>\d+) training sessions?\!|You gain (?P<dailytrains1>\d+) extra trains? daily blessing bonus\.)|.*)\n(You gain (?P<dailytrains2>\d+) extra trains? daily blessing bonus\.|.*)\n\Z"
+   multi_line="y"
    name="l33t_power_up"
    regexp="y"
    script="l33t_handle_power_up"
    sequence="2"
   >
   </trigger>
+
 
   <trigger
    enabled="y"
@@ -310,6 +326,7 @@ end
 
 
 function l33t_handle_power_up(name, line, wildcards)
+SendNoEcho('tracker blah')
     local timestamp = os.time()
 
     totalPowerUpsGained = totalPowerUpsGained + 1
