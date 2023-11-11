@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE muclient>
+
+<muclient>
+<plugin
+   name="l33t_hunttrick"
+   author="Ruhamah"
+   id="13370dde7edf44c74df3aef1"
+   language="Lua"
+   purpose="Hunt trick and hunt helpers"
+   save_state="y"
+   date_written="2023-11-10 01:33:37"
+   requires="4.76"
+   version="0.01"
+   >
+<description trim="y">
+<![CDATA[
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+l33t_template_lua (v0.01) by Ruhamah (https://aard.l33t.xyz)
+
+l33t Hunt Trick
+
+The Hunt Trick is used especially during campaigns when there are
+multiple mobs in the area with the same name, but only one or a few of
+those mobs are the campaign mob target.
+
+For example, if the target is 'princess', this plugin will
+automatically send:
+
+'hunt 1.princess'
+'hunt 2.princess'
+'hunt 3.princess'
+...
+'hunt n.princess'
+
+Until the campaign target is detected.
+
+See 'help hunt trick'.
+
+Usage:
+
+  l33t hunt [help]               - Displays help
+  lhunt [help]
+
+  ht <target>                    - Starts the hunt trick sequence
+
+  lhunt <on|off>                 - Enable or disable this plugin
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]>
+</description>
+
+</plugin>
+
+
+<!--  Get our standard constants -->
+
+<include name="constants.lua"/>
+
+<!--  Triggers  -->
+
+<triggers>
+
+  <trigger
+   enabled="y"
+   group="l33t_hunt"
+   match="^You seem unable to hunt that target for some reason\.$"
+   name="l33t_hunt_unable_to_hunt"
+   regexp="y"
+   omit_from_output="n"
+   script="lhunt_unable_to_hunt"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   group="l33t_hunt"
+   match="^No one in this area by the name '.*'\.$"
+   name="l33t_hunt_not_here"
+   omit_from_output="n"
+   regexp="y"
+   script="lhunt_not_here"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   group="l33t_hunt"
+   match="^(?P<mob>.*) is here!$"
+   name="l33t_hunt_here"
+   omit_from_output="n"
+   regexp="y"
+   script="lhunt_here"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   group="l33t_hunt"
+   match="^You are certain that (?P<mob>.*) is (?P<dir>.*) from here\.$"
+   name="l33t_hunt_certain"
+   omit_from_output="n"
+   regexp="y"
+   script="lhunt_mob_dir"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   group="l33t_hunt"
+   match="^You are confident that (?P<mob>.*) passed through here, heading (?P<dir>.*)\.$"
+   name="l33t_hunt_confident"
+   omit_from_output="n"
+   regexp="y"
+   script="lhunt_mob_dir"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   group="l33t_hunt"
+   match="^You have no idea what you're doing, but maybe (?P<mob>.*) is (?P<dir>.*)\?$"
+   name="l33t_hunt_no_idea"
+   omit_from_output="n"
+   regexp="y"
+   script="lhunt_mob_dir"
+   sequence="100"
+  >
+  </trigger>
+
+  <trigger
+   enabled="y"
+   group="l33t_hunt"
+   match="^You couldn't find a path to (?P<mob>.*) from here\.$"
+   name="l33t_hunt_path_not_found"
+   omit_from_output="n"
+   regexp="y"
+   script="lhunt_path_not_found"
+   sequence="100"
+  >
+  </trigger>
+
+</triggers>
+
+<!--  Aliases  -->
+
+<aliases>
+  <alias
+   enabled="y"
+   group="l33t_hunt"
+   match="^ *ht +(?P<mob>.*) *"
+   regexp="y"
+   script="ht_start"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t_hunt"
+   match="^ *lhunt +on *"
+   regexp="y"
+   script="lhunt_on"
+   sequence="100"
+  >
+  </alias>
+
+  <alias
+   enabled="y"
+   group="l33t_hunt"
+   match="^ *lhunt +off *"
+   regexp="y"
+   script="lhunt_off"
+   sequence="100"
+  >
+  </alias>
+
+  <!--  Plugin help  -->
+  <alias
+   enabled="y"
+   group="l33t_hunt"
+   match="^ *l33t(_| )hunt(:| )help"
+   regexp="y"
+   script="OnHelp"
+   sequence="999"
+  >
+  </alias>
+  <alias
+   enabled="y"
+   group="l33t_hunt"
+   match="^ *lhunt *(help)?.*$"
+   regexp="y"
+   sequence="999"
+   script="OnHelp"
+  >
+  </alias>
+</aliases>
+
+<!--  Script  -->
+
+
+<script>
+<![CDATA[
+
+
+-- See: https://github.com/fiendish/aardwolfclientpackage/wiki/Using-GMCP
+require "gmcphelper" -- adds the gmcp() function for simplifying data access
+
+
+-- Globals
+
+
+PLUGIN_ID = GetPluginID()
+PLUGIN_NAME = GetPluginInfo(PLUGIN_ID, 1)
+PLUGIN_AUTHOR = GetPluginInfo(PLUGIN_ID, 2)
+PLUGIN_VERSION = GetPluginInfo(PLUGIN_ID, 19)
+PLUGIN_NUM_TRIGGERS = GetPluginInfo(PLUGIN_ID, 9)
+PLUGIN_NUM_ALIASES = GetPluginInfo(PLUGIN_ID, 10)
+PLUGIN_NUM_TIMERS = GetPluginInfo(PLUGIN_ID, 11)
+
+PLUGIN_URL = 'https://aard.l33t.xyz'
+
+-- Other plugins
+PLUGIN_ID_GMCP_HANDLER = '3e7dedbe37e44942dd46d264'
+PLUGIN_ID_DINV = '88c86ea252fc1918556df9fe'
+PLUGIN_ID_L33T_LUA_UTILS = '13376f198e8f442baa0be9a6'
+
+
+-- Script Locals
+
+local LHUNT_ENABLED = true
+local LHUNT_HUNTTRICK_TARGET = nil
+local LHUNT_HUNTTRICK_COUNTER = 0
+local LHUNT_HUNTTRICK_IN_PROGRESS = false
+
+local currentRoomInfo = nil
+
+
+function handleGMCP(text)
+    --[[
+    Room Format:
+
+    {
+        ['details'] = 'safe',
+        ['name'] = 'The Grand City of Aylor',
+        ['num'] = '32418',
+        ['exits'] = {
+            ['s'] = '32419',
+            ['u'] = '35200',
+            ['d'] = '32615',
+            ['w'] = '30518',
+            ['n'] = '32539',
+            ['e'] = '32698'
+        },
+        ['terrain'] = 'aylorcity',
+        ['coord'] = {
+            ['y'] = '20',
+            ['x'] = '30',
+            ['cont'] = '0',
+            ['id'] = '0'
+        },
+        ['outside'] = '0',
+        ['zone'] = 'aylor'
+    }
+
+--]]
+
+    if text == 'room.info' then
+        local roomInfo = gmcp('room.info')
+        if roomInfo ~= nil then
+            currentRoomInfo = roomInfo
+        end
+    end
+end
+
+
+-- Extensions
+
+
+table.reduce = function (list, fn)
+    local acc
+    for k, v in ipairs(list) do
+        if 1 == k then
+            acc = v
+        else
+            acc = fn(acc, v)
+        end
+    end
+    return acc
+end
+
+
+function sum(a, b)
+    return a + b
+end
+
+
+-- Core Functions
+
+
+function lhunt_on()
+    LHUNT_ENABLED = true
+    Note('l33t hunt enabled')
+end
+
+
+function lhunt_off()
+    LHUNT_ENABLED = false
+    Note('l33t hunt disabled')
+end
+
+
+function ht_start(name, line, wildcards)
+    local target = GetAliasWildcard(name, 'mob')
+    LHUNT_HUNTTRICK_TARGET = target
+    LHUNT_HUNTTRICK_COUNTER = 0
+    LHUNT_HUNTTRICK_ACTIVE = true
+    ht_iter()
+end
+
+
+function build_cur_target()
+    local target = LHUNT_HUNTTRICK_COUNTER .. '.' .. LHUNT_HUNTTRICK_TARGET
+    return target
+end
+
+
+function ht_iter()
+    LHUNT_HUNTTRICK_COUNTER = LHUNT_HUNTTRICK_COUNTER + 1
+    local target = build_cur_target()
+    Execute('hunt ' .. target)
+end
+
+
+function lhunt_unable_to_hunt()
+    LHUNT_HUNTTRICK_ACTIVE = false
+    local target = build_cur_target()
+    Execute('where ' .. target)
+end
+
+
+function lhunt_here()
+    if LHUNT_HUNTTRICK_ACTIVE then
+        ht_iter()
+    end
+end
+
+
+function lhunt_not_here()
+    LHUNT_HUNTTRICK_TARGET = nil
+    LHUNT_HUNTTRICK_COUNTER = 0
+    LHUNT_HUNTTRICK_ACTIVE = false
+end
+
+
+function lhunt_move_dir(raw_dir)
+    local dir_map = {
+        ['north'] = 'n',
+        ['south'] = 's',
+        ['east'] = 'e',
+        ['west'] = 'w',
+        ['up'] = 'u',
+        ['down'] = 'd',
+    }
+
+    if LHUNT_ENABLED then
+        local dir = dir_map[raw_dir]
+        Execute(dir)
+    end
+end
+
+
+function lhunt_mob_dir(name, line, wildcards)
+    local mob = GetAliasWildcard(name, 'mob')
+    local dir = GetAliasWildcard(name, 'dir')
+
+    if LHUNT_HUNTTRICK_ACTIVE then
+        ht_iter()
+    else
+        lhunt_move_dir(dir)
+    end
+
+end
+
+
+function lhunt_path_not_found()
+    if LHUNT_HUNTTRICK_ACTIVE then
+        ht_iter()
+    end
+end
+
+-- Help
+
+
+function OnHelp (sName, sLine, wildcards)
+    Note(GetPluginInfo(GetPluginID(), 3))
+end
+
+
+-- Plugin Lifecycle
+
+
+function OnPluginInstall()
+    printSeparator()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            'Loaded ' .. PLUGIN_NAME
+            .. ' (v' .. PLUGIN_VERSION .. ')'
+            .. ' by ' .. PLUGIN_AUTHOR
+            .. ' ('
+        )
+    )
+    printPluginLink()
+    ColourTell(
+        'CornFlowerBlue', '', (
+            ').\n'
+            .. 'Loaded '
+            .. PLUGIN_NUM_TRIGGERS .. ' triggers, '
+            .. PLUGIN_NUM_ALIASES .. ' aliases, '
+            .. PLUGIN_NUM_TIMERS .. ' timers.\n\n'
+        ),
+        'CornFlowerBlue', '', 'Type "',
+        'MediumSeaGreen', '', 'l33t hunt help',
+        'CornFlowerBlue', '', '".\n'
+    )
+    printSeparator()
+end
+
+
+function OnPluginSaveState()
+end
+
+
+function OnPluginBroadcast(msg, id, name, text)
+    if id == PLUGIN_ID_GMCP_HANDLER then
+        handleGMCP(text)
+    elseif id == PLUGIN_ID_L33T_LUA_UTILS then
+        -- placeholder
+    else
+        -- do nothing, unrecognized plugin
+    end
+end
+
+
+-- Util Functions
+
+
+function printSeparator()
+    ColourTell(
+        'CornFlowerBlue',
+        '',
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+    )
+end
+
+
+function printPluginLink()
+    Hyperlink(PLUGIN_URL, PLUGIN_URL, '', '', '', 1)
+end
+
+
+function getDurationString(duration)
+    local seconds = duration
+    local hours = math.floor(seconds / 3600)
+    seconds = seconds - (hours * 3600)
+    local minutes = math.floor(seconds / 60)
+    seconds = seconds - (minutes * 60)
+
+    local durationString = ''
+    if hours > 0 then
+        durationString = durationString .. hours .. ' hours'
+    end
+
+    if minutes > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. minutes .. ' minutes'
+    end
+
+    if seconds > 0 then
+        if string.len(durationString) > 0 then
+            durationString = durationString .. ', '
+        end
+        durationString = durationString .. seconds .. ' seconds'
+    end
+
+    return durationString
+end
+
+
+]]>
+</script>
+
+
+</muclient>

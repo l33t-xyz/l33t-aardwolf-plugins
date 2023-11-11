@@ -49,6 +49,14 @@
     <installpath>0</installpath>
   </plugin>
   <plugin>
+    <name>l33t Hunt Trick</name>
+    <author>Ruhamah</author>
+    <description>l33t Hunt Trick and Hunt helpers</description>
+    <id>13370dde7edf44c74df3aef1</id>
+    <download>https://raw.githubusercontent.com/l33t-xyz/l33t-aardwolf-plugins/master/archives/l33t_hunttrick-latest.zip</download>
+    <installpath>0</installpath>
+  </plugin>
+  <plugin>
     <name>l33t Enchanter</name>
     <author>Ruhamah</author>
     <description>l33t Enchanter batch enchants items in containers.</description>
