@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2023-11-10 01:33:37"
    requires="4.76"
-   version="0.01"
+   version="0.02"
    >
 <description trim="y">
 <![CDATA[
@@ -376,8 +376,8 @@ end
 
 
 function lhunt_mob_dir(name, line, wildcards)
-    local mob = GetAliasWildcard(name, 'mob')
-    local dir = GetAliasWildcard(name, 'dir')
+    local mob = GetTriggerWildcard(name, 'mob')
+    local dir = GetTriggerWildcard(name, 'dir')
 
     if LHUNT_HUNTTRICK_ACTIVE then
         ht_iter()
