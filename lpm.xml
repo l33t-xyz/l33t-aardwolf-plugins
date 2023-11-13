@@ -98,7 +98,7 @@
   </plugin>
 
   <plugin>
-    <name>Mendaloth's Aardwolf Fake Tracker Channel</name>
+    <name>Aardwolf Fake Tracker Channel by Mendaloth</name>
     <author>Mendaloth</author>
     <description>Allows use of a fake tracker channel, along with history.</description>
     <id>9a386e25e87cd9ed2311c961</id>
@@ -106,7 +106,7 @@
     <installpath>vendor</installpath>
   </plugin>
   <plugin>
-    <name>Mendaloth's Aardwolf Instinct/Mastery Reporter</name>
+    <name>Aardwolf Instinct/Mastery Reporter by Mendaloth</name>
     <author>Mendaloth</author>
     <description>Reports your instinct and mastery to room or a channel.</description>
     <id>9a386e25e87cd9ed2311c961</id>
@@ -115,7 +115,7 @@
   </plugin>
 
   <plugin>
-    <name>Pwar's Inviter</name>
+    <name>Group Inviter by Pwar</name>
     <author>Pwar</author>
     <id>56e7e7121bf320c3510ee2e0</id>
     <description>Lets you add friends/clan members to a list to auto-invite them to party when they login. Also lets group members use commands via tell/group messages to invite themselves or others.</description>
