@@ -11,7 +11,7 @@
    save_state="y"
    date_written="2019-12-17 01:33:37"
    requires="4.76"
-   version="0.10"
+   version="0.11"
    >
 <description trim="y">
 <![CDATA[
@@ -326,7 +326,6 @@ end
 
 
 function l33t_handle_power_up(name, line, wildcards)
-SendNoEcho('tracker blah')
     local timestamp = os.time()
 
     totalPowerUpsGained = totalPowerUpsGained + 1
