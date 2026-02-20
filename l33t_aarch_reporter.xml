@@ -12,7 +12,7 @@
    save_state="y"
    date_written="2019-12-16 01:33:37"
    requires="4.76"
-   version="0.09"
+   version="0.10"
    >
 <description trim="y">
 <![CDATA[
@@ -54,7 +54,7 @@ Usage:
   <trigger
    enabled="n"
    group="l33t"
-   match="^(?P<itemId>\d+),(?P<itemFlags>K?M?G?H?),(?P<itemName>.*),(?P<level>\d+),(?P<itemType>\d{1,2}),(?P<isUnique>1|0),(?P<wearLoc>-?\d+),(?P<timer>-?\d+)$"
+   match="^(?P<itemId>\d+),(?P<itemFlags>K?M?G?H?N?),(?P<itemName>.*),(?P<level>\d+),(?P<itemType>\d{1,2}),(?P<isUnique>1|0),(?P<wearLoc>-?\d+),(?P<timer>-?\d+)$"
    name="l33t_aarch_invdata_item"
    omit_from_output="y"
    regexp="y"
